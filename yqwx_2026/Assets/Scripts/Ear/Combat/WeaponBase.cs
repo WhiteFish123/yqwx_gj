@@ -3,7 +3,7 @@ using UnityEngine;
 // 武器基类：把"所有武器都一样"的部分集中在这里，具体怎么打由子类实现。
 // 负责三件事：
 //   1) 冷却 cooldown —— 两次使用之间的最小间隔
-//   2) 后摇 recovery —— 用完这段时间内玩家不能移动（由 HeldItemSlot 调 PlayerGridMove.LockMovement 锁住）
+//   2) 后摇 recovery —— 用完这段时间内玩家不能移动（由 Player_AttackState 拿这个时长来卡住攻击状态）
 //   3) 使用次数     —— 次数用完武器自毁
 //
 // ★ 使用次数属于"物品"，不属于武器脚本。
@@ -18,6 +18,11 @@ public abstract class WeaponBase : MonoBehaviour, IUsable
 
     // 兜底值：正常流程下会被物品数据覆盖（见 ApplyItemUses）。-1 = 无限次
     public int maxUses = -1;
+
+    [Header("噪音")]
+    // 使用这件武器时，向周围广播噪音的半径；0 = 完全无声。
+    // 半径内的敌人会走过来查看（Enemy.BroadcastNoise）。枪声设大一点，刀保持 0。
+    public float noiseRadius = 0f;
 
     private float nextUseTime;       // 下一次可以使用的时间点
     private int remainingUses = -1;  // 还剩几次；-1 = 无限
@@ -61,6 +66,10 @@ public abstract class WeaponBase : MonoBehaviour, IUsable
         if (!IsInfinite) remainingUses--;
 
         DoUse(origin, facing);   // 子类真正打出去
+
+        // 打出声音：半径内的敌人会前来查看（穿墙传播，符合"听觉"直觉）
+        if (noiseRadius > 0f)
+            Enemy.BroadcastNoise(origin, noiseRadius);
 
         if (!IsInfinite && remainingUses <= 0)
         {

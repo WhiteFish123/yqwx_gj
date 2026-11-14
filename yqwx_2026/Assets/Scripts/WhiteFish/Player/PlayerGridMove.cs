@@ -1,7 +1,13 @@
 using System.Collections;
 using UnityEngine;
 
-//临时玩家控制：按 WASD（或方向键）上下左右逐格移动，按住 F 可抓取正前方的箱子推拉
+// 格子移动"引擎"：只提供能力，不做决定。
+//
+// 和以前的区别：以前这个脚本自己在 Update 里读输入、自己决定走/抓/推；
+// 现在这些决定全部交给 PlayerBrain 的状态机（Idle / Move / Attack / Interact），
+// 它只负责把"走一格""推一格"这些动作平滑播完。
+//
+// ★ 推拉箱子的规则完全复用学长的 ChestPushPullRules，这里一行判定逻辑都没有重写。
 public class PlayerGridMove : MonoBehaviour
 {
     [SerializeField] private Grid grid;//所在网格，留空则自动查找
@@ -11,19 +17,11 @@ public class PlayerGridMove : MonoBehaviour
     private Vector3Int cell;//当前所在格
     private bool isMoving;//移动协程进行中
     private Chest grabbedChest;//抓住的箱子，null 表示没抓
-    private float lockTimer;//后摇锁定剩余时间（秒），>0 时不能开始新的移动
 
-    public Vector2Int Facing { get; set; } = Vector2Int.down;//朝向，决定推拉方向
-    public Vector3Int Cell => cell;
-
-    /// <summary>是否处于后摇/僵直锁定中（武器后摇用）</summary>
-    public bool IsLocked => lockTimer > 0f;
-
-    /// <summary>锁住移动 seconds 秒：这段时间内不接受新的移动输入（已有的一步会走完）</summary>
-    public void LockMovement(float seconds)
-    {
-        if (seconds > lockTimer) lockTimer = seconds;
-    }
+    public Vector2Int Facing { get; set; } = Vector2Int.down;//朝向（由状态在移动前设置）
+    public Vector3Int Cell => cell;//当前所在格
+    public bool IsMoving => isMoving;//是否正在跨格
+    public bool IsGrabbing => grabbedChest != null;//是否抓着箱子
 
     private void Start()
     {
@@ -34,65 +32,38 @@ public class PlayerGridMove : MonoBehaviour
             cell = grid.WorldToCell(transform.position);
     }
 
-    private void Update()
+    // ===== 下面这些是给状态机调用的"能力" =====
+
+    //尝试朝 direction 走一格；返回 true 表示真的迈出去了（会在 moveDuration 内走完）
+    public bool TryWalk(Vector2Int direction)
     {
-        if (lockTimer > 0f)
-            lockTimer -= Time.deltaTime;//后摇计时：即使正在移动也要继续倒数
+        if (isMoving || grid == null || direction == Vector2Int.zero)
+            return false;
 
-        if (isMoving || grid == null)
-            return;
+        Vector3Int target = new Vector3Int(cell.x + direction.x, cell.y + direction.y, cell.z);
+        if (!IsWalkable(target))
+            return false;
 
-        if (lockTimer > 0f)
-            return;//后摇期间不接受新的移动输入
+        StartCoroutine(MoveRoutine(target));
+        return true;
+    }
 
-        Vector2Int direction = ReadInput();
-        bool holdingGrab = Input.GetKey(KeyCode.F);
-
-        if (grabbedChest == null)
-        {
-            if (direction != Vector2Int.zero)
-                Facing = direction;
-
-            if (holdingGrab && TryGrab())
-                return;
-
-            if (direction != Vector2Int.zero)
-                TryWalk(direction);
-
-            return;
-        }
-
-        if (!holdingGrab)//松开 F 立即释放，当帧不再移动
-        {
-            grabbedChest = null;
-            return;
-        }
-
+    //设置朝向（零向量忽略）。抓箱子期间不会被移动改写，推拉方向才稳定。
+    public void SetFacing(Vector2Int direction)
+    {
         if (direction != Vector2Int.zero)
-            TryPushOrPull(direction);
+            Facing = direction;
     }
 
-    private Vector2Int ReadInput()//读取方向输入（一次一格）
+    //抓住正前方相邻格的箱子
+    public bool TryGrab()
     {
-        if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
-            return Vector2Int.up;
+        if (isMoving || grabbedChest != null || grid == null)
+            return false;
 
-        if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
-            return Vector2Int.down;
-
-        if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
-            return Vector2Int.left;
-
-        if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
-            return Vector2Int.right;
-
-        return Vector2Int.zero;
-    }
-
-    private bool TryGrab()//抓住正前方相邻格的箱子
-    {
         Vector2Int playerCell = new Vector2Int(cell.x, cell.y);
         Chest chest = Chest.At(playerCell + Facing);
+
         if (!ChestPushPullRules.CanGrab(playerCell, Facing, chest != null))
             return false;
 
@@ -100,22 +71,35 @@ public class PlayerGridMove : MonoBehaviour
         return true;
     }
 
-    private void TryPushOrPull(Vector2Int direction)//朝向方向推，反方向拉
+    public void ReleaseGrab()
     {
+        grabbedChest = null;
+    }
+
+    //朝向方向推、反方向拉（判定与目标格计算全部来自学长的 ChestPushPullRules）
+    public bool TryPushOrPull(Vector2Int direction)
+    {
+        if (isMoving || grabbedChest == null || grid == null)
+            return false;
+
         ChestMoveKind kind = ChestPushPullRules.Resolve(Facing, direction);
         if (kind == ChestMoveKind.None)
-            return;
+            return false;
 
         Vector2Int playerCell = new Vector2Int(cell.x, cell.y);
+
         if (!ChestPushPullRules.CanExecute(playerCell, grabbedChest.Cell, Facing, kind,
                 IsCellBlocked, HasOtherChest))
-            return;
+            return false;
 
         ChestPushPullRules.TryComputeTargets(playerCell, grabbedChest.Cell, Facing, kind,
             out Vector2Int playerTarget, out Vector2Int chestTarget);
 
         StartCoroutine(MoveBothRoutine(playerTarget, grabbedChest, chestTarget));
+        return true;
     }
+
+    // ===== 内部工具 =====
 
     private bool IsCellBlocked(Vector2Int target)//墙体/敌人占用，口径与 IsBlocked 一致
     {
@@ -126,15 +110,6 @@ public class PlayerGridMove : MonoBehaviour
     {
         Chest chest = Chest.At(target);
         return chest != null && chest != grabbedChest;
-    }
-
-    private void TryWalk(Vector2Int direction)//普通走路
-    {
-        Vector3Int target = new Vector3Int(cell.x + direction.x, cell.y + direction.y, cell.z);
-        if (!IsWalkable(target))
-            return;
-
-        StartCoroutine(MoveRoutine(target));
     }
 
     private bool IsWalkable(Vector3Int target)//墙、敌人、箱子都不能进

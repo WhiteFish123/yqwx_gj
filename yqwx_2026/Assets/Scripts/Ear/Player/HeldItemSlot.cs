@@ -21,6 +21,10 @@ public class HeldItemSlot : MonoBehaviour
     public InventoryItem HeldItem => heldItem;
     public WeaponBase HeldWeapon => current as WeaponBase;
 
+    // 手上这件能不能按 J 使用（武器才有 IUsable；血瓶、钥匙这类是 false）
+    // PlayerBrain 用它判断"按 J 算不算攻击输入"，所以空手时不会进攻击状态
+    public bool CanUseHeldItem => current != null;
+
     public string HeldItemName =>
         heldItem != null && heldItem.data != null ? heldItem.data.itemName : "";
 
@@ -44,13 +48,21 @@ public class HeldItemSlot : MonoBehaviour
             current = null;
         }
 
-        if (current == null) return;
-        if (!Input.GetKeyDown(useKey)) return;
+    }
+
+    // ===== 由状态机（Player_AttackState）调用 =====
+
+    /// <summary>
+    /// 使用一次手上的道具，返回这次的后摇时长（0 = 没打出去：冷却中或手上没东西）。
+    /// 输入与状态时机现在归 PlayerBrain 管，这里只负责"执行"。
+    /// </summary>
+    public float UseEquipped()
+    {
+        if (current == null) return 0f;
 
         float recovery = current.Use(transform.position, Facing);
-        if (recovery > 0f && move != null) move.LockMovement(recovery);   // 后摇：锁住移动
-
         SyncUsesToItem();   // 把武器的剩余次数写回物品
+        return recovery;
     }
 
     //朝向：格子移动的 Facing 是 Vector2Int，这里转成 Vector2 给武器用

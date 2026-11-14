@@ -114,6 +114,18 @@ public class Inventory : MonoBehaviour
         return item;
     }
 
+    //还有没有空格子（拾取时用来判断"背包放不放得下"）
+    public bool HasEmptySlot()
+    {
+        for (int i = 0; i < SlotCount; i++)
+        {
+            if (slots[i] == null)
+                return true;
+        }
+
+        return false;
+    }
+
     private void GiveStartingItems()//开局发放测试道具
     {
         for (int i = 0; i < startingItems.Count; i++)

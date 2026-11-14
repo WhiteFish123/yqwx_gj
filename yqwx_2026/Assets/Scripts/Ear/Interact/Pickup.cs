@@ -3,7 +3,9 @@
 // 规则：
 //   ① 手上空着        → 装到手上
 //   ② 手上有东西      → 放进背包
-//   ③ 手上和背包都满  → 留在原地，什么都不变
+//   ③ 手上和背包都满  → 提示"没有多余的空间"，按 E 不做任何事
+//
+// 提示文字会带上剩余使用次数（例：拾取手枪（4/6）），无限次物品（刀）不显示括号。
 using UnityEngine;
 
 public class Pickup : MonoBehaviour, IInteractable
@@ -14,9 +16,46 @@ public class Pickup : MonoBehaviour, IInteractable
     [Tooltip("这件物品还剩几次使用；-1 表示按满次数算（全新物品留 -1 即可）")]
     public int remainingUses = -1;
 
+    private Inventory bag;//缓存背包，避免每帧 FindFirstObjectByType
+    private HeldItemSlot slot;//缓存手持栏
+
+    private void Start()
+    {
+        EnsureRefs();
+    }
+
+    private void EnsureRefs()
+    {
+        if (bag == null) bag = FindFirstObjectByType<Inventory>();
+        if (slot == null) slot = FindFirstObjectByType<HeldItemSlot>();
+    }
+
+    //还有没有地方放：手上空着，或者背包有空格
+    private bool HasRoom()
+    {
+        EnsureRefs();
+
+        if (slot != null && !slot.HasItem)
+            return true;
+
+        return bag != null && bag.HasEmptySlot();
+    }
+
     public string GetPrompt()
     {
-        return itemData != null ? "拾取 " + itemData.itemName : "拾取 物品";
+        if (itemData == null)
+            return "拾取物品";
+
+        //没地方放：直接把原因写在提示里，按 E 也不会有效果
+        if (!HasRoom())
+            return "你没有多余的空间容纳" + itemData.itemName + "了";
+
+        //无限次物品（刀）不显示次数
+        if (itemData.maxUses < 0)
+            return "拾取" + itemData.itemName;
+
+        int uses = remainingUses >= 0 ? remainingUses : itemData.maxUses;
+        return "拾取" + itemData.itemName + "（" + uses + "/" + itemData.maxUses + "）";
     }
 
     public void Interact(GameObject interactor)
@@ -27,29 +66,31 @@ public class Pickup : MonoBehaviour, IInteractable
             return;
         }
 
-        HeldItemSlot slot = interactor.GetComponent<HeldItemSlot>();
-        if (slot == null) return;
+        HeldItemSlot hand = interactor.GetComponent<HeldItemSlot>();
+        if (hand == null) return;
 
-        // 先给这件物品造一个"运行时实例"，把地上的剩余次数带过去
+        //放不下就什么都不做（提示文字已经说明原因）
+        if (!HasRoom()) return;
+
+        //先给这件物品造一个"运行时实例"，把地上的剩余次数带过去
         InventoryItem item = new InventoryItem(itemData);
         if (remainingUses >= 0) item.SetRemainingUses(remainingUses);
 
-        // ① 手上空 → 进手上
-        if (slot.Equip(item))
+        //① 手上空 → 进手上
+        if (hand.Equip(item))
         {
             Destroy(gameObject);
             return;
         }
 
-        // ② 手上有 → 进背包（用 AddExistingItem，才会保留剩余次数）
-        Inventory bag = FindFirstObjectByType<Inventory>();
+        //② 手上有 → 进背包（用 AddExistingItem 才会保留剩余次数）
         if (bag != null && bag.AddExistingItem(item))
         {
             Destroy(gameObject);
             return;
         }
 
-        // ③ 都放不下 → 留在原地
+        //③ 理论上走不到这里（HasRoom 已经拦过），保险起见留在原地
         Debug.Log("手上和背包都放不下：" + itemData.itemName);
     }
 

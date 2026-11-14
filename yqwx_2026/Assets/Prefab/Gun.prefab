@@ -47,6 +47,7 @@ MonoBehaviour:
   cooldown: 3
   recovery: 0.3
   maxUses: 6
+  noiseRadius: 8
   damage: 5
   range: 10
   startOffset: 0.6

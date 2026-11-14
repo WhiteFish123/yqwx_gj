@@ -15,6 +15,7 @@ public class Enemy : MonoBehaviour
     public Enemy_AttackState attackState;//攻击冲刺状态
     public Enemy_ReturnState returnState;//返回巡逻状态
     public Enemy_DeadState deadState;//死亡状态
+    public Enemy_InvestigateState investigateState;//调查声音状态（听到噪音时前往查看）
 
     [Header("Health")]
     [SerializeField] protected float maxHealth = 1f;//最大生命值
@@ -32,6 +33,10 @@ public class Enemy : MonoBehaviour
     public Grid grid;//所在网格，留空则自动查找
     public LayerMask obstacleMask;//障碍物层
     public float chaseDuration = 0.22f;//追逐时走一格用时
+
+    [Header("听觉")]
+    public float investigateDuration = 0.3f;//调查噪音时走一格用时（比巡逻快、比追逐慢）
+    public Vector3Int? heardCell { get; private set; }//最近听到声音所在的格，null 表示没有
 
     [Header("Attack")]
     public int attackTriggerDistance = 2;//与玩家同一直线且距离为此值时发动冲刺
@@ -265,5 +270,55 @@ public class Enemy : MonoBehaviour
     public void BeginAttackCooldown()//攻击结束后开始冷却
     {
         nextAttackTime = Time.time + attackCooldown;
+    }
+
+    // ===== 听觉：被噪音吸引 =====
+
+    //听到声音：记下声音所在格，并进入"调查"状态走过去看看。
+    //由 NoiseBroadcast（见下方 BroadcastNoise）在开枪等事件时统一调用。
+    public void HearNoise(Vector3 worldPosition)
+    {
+        if (isDead || investigateState == null)
+            return;
+
+        //冲刺攻击中不打断，否则冲刺位移和动画会对不上
+        if (attackState != null && stateMachine.currentState == attackState)
+            return;
+
+        //已经看见玩家时不需要"去查看"，继续追就行
+        if (chaseState != null && stateMachine.currentState == chaseState && CanSeePlayer())
+            return;
+
+        heardCell = WorldToCell(worldPosition);
+
+        //已经在调查时 ChangeState 会返回 false（同状态不切换），
+        //但调查状态每帧都读 heardCell，所以目标会自动改成新位置。
+        stateMachine.ChangeState(investigateState);
+    }
+
+    public void ClearHeardCell()//调查结束，忘掉这次声音
+    {
+        heardCell = null;
+    }
+
+    //噪声广播：让半径内所有活着的敌人前往 position 查看。
+    //枪声、砸东西、爆炸都可以调它；声音穿墙（不做视线检查），这也符合"听觉"的直觉。
+    public static void BroadcastNoise(Vector3 position, float radius)
+    {
+        if (radius <= 0f)
+            return;
+
+        float sqrRadius = radius * radius;
+
+        foreach (Enemy enemy in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
+        {
+            if (enemy == null || enemy.isDead)
+                continue;
+
+            if ((enemy.transform.position - position).sqrMagnitude > sqrRadius)
+                continue;
+
+            enemy.HearNoise(position);
+        }
     }
 }

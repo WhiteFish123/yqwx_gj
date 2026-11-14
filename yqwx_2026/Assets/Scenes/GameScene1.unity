@@ -332,7 +332,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 63464980}
-  smoothTime: 0.2
+  smoothTime: 0.1
   offset: {x: 0, y: 0, z: -10}
 --- !u!1 &858151020
 GameObject:
@@ -1061,11 +1061,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6308839795869284805, guid: b13558d0090360849817532a92eeaf11, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6308839795869284805, guid: b13558d0090360849817532a92eeaf11, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 6308839795869284805, guid: b13558d0090360849817532a92eeaf11, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1126,11 +1126,11 @@ PrefabInstance:
       objectReference: {fileID: 63464980}
     - target: {fileID: 4038357709367497031, guid: 3c835672200d9884983a466505d74d27, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 4038357709367497031, guid: 3c835672200d9884983a466505d74d27, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 4038357709367497031, guid: 3c835672200d9884983a466505d74d27, type: 3}
       propertyPath: m_LocalPosition.z
