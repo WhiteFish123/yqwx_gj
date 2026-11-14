@@ -62,6 +62,23 @@ public class PlayerBrain : MonoBehaviour
     {
         ReadInput();
         stateMachine.UpdateActiveState();
+        UpdateAnimatorDirection();
+    }
+
+    //把朝向同步给 Animator 的整型参数 Dir（0=下 1=上 2=左 3=右）
+    //没有 Animator（或还没指定 controller）时自动跳过，不会报错
+    private void UpdateAnimatorDirection()
+    {
+        if (anim == null || anim.runtimeAnimatorController == null) return;
+
+        Vector2Int facing = motor != null ? motor.Facing : Vector2Int.down;
+
+        int dir = 0;
+        if (facing == Vector2Int.up) dir = 1;
+        else if (facing == Vector2Int.left) dir = 2;
+        else if (facing == Vector2Int.right) dir = 3;
+
+        anim.SetInteger("Dir", dir);
     }
 
     private void ReadInput()
