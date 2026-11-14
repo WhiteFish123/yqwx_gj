@@ -9,8 +9,8 @@ using UnityEngine;
 //   3) 什么时候放弃   → ShouldAbort() / OnNoTarget()
 public class Enemy_InvestigateState : Enemy_PathMoveState
 {
-    public Enemy_InvestigateState(Enemy enemy, StateMachine stateMachine, string animBoolName)
-        : base(enemy, stateMachine, animBoolName)
+    public Enemy_InvestigateState(Enemy enemy, StateMachine stateMachine, string animBoolName, string animPlayName = null)
+        : base(enemy, stateMachine, animBoolName, animPlayName)
     {
     }
 
@@ -25,9 +25,10 @@ public class Enemy_InvestigateState : Enemy_PathMoveState
 
     protected override bool ShouldAbort()//中途看见玩家 → 立刻转追逐
     {
-        if (enemy.chaseState != null && enemy.CanSeePlayer())
+        EnemyState alert = enemy.GetAlertState();
+        if (alert != null && enemy.CanDetectPlayer())
         {
-            stateMachine.ChangeState(enemy.chaseState);
+            stateMachine.ChangeState(alert);
             return true;
         }
 

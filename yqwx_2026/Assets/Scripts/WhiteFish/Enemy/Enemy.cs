@@ -53,6 +53,9 @@ public class Enemy : MonoBehaviour
     public float trailOffset = 0.45f;//拖尾相对身体后方的偏移距离
     public Vector2Int facing { get; private set; } = Vector2Int.right;//四向朝向
 
+    [Header("Rendering")]
+    public bool invertSpriteFlip;//素材默认朝左的敌人勾上，把左右翻向反过来
+
     protected virtual void Awake()//获取组件
     {
         anim = GetComponentInChildren<Animator>();
@@ -179,10 +182,8 @@ public class Enemy : MonoBehaviour
         if (spriteRenderer == null)
             return;
 
-        if (direction.x > 0)
-            spriteRenderer.flipX = false;
-        else if (direction.x < 0)
-            spriteRenderer.flipX = true;
+        if (direction.x != 0)//横向朝向才翻转；勾了 invertSpriteFlip 说明素材默认朝左
+            spriteRenderer.flipX = invertSpriteFlip ? direction.x > 0 : direction.x < 0;
     }
 
     public bool CanSeePlayer()//玩家是否在视野内
@@ -197,6 +198,21 @@ public class Enemy : MonoBehaviour
         Vector3Int playerCell = WorldToCell(player.transform.position);
         List<Vector2Int> visible = vision.GetVisibleCells(WorldToCell(transform.position), facing);
         return visible.Contains(new Vector2Int(playerCell.x, playerCell.y));
+    }
+
+    public virtual bool CanDetectPlayer()//玩家是否被察觉（史莱姆：3 排宽视野；石像鬼：正前方直线）
+    {
+        return CanSeePlayer();
+    }
+
+    public virtual EnemyState GetAlertState()//察觉玩家后要进入的状态（史莱姆：追逐；石像鬼：蓄力）
+    {
+        return chaseState;
+    }
+
+    public virtual bool IsBusy()//是否处于不可被噪音打断的状态
+    {
+        return attackState != null && stateMachine.currentState == attackState;
     }
 
     public bool IsOnPatrolRoute()//当前格是否就在巡逻路线上
@@ -282,7 +298,7 @@ public class Enemy : MonoBehaviour
             return;
 
         //冲刺攻击中不打断，否则冲刺位移和动画会对不上
-        if (attackState != null && stateMachine.currentState == attackState)
+        if (IsBusy())
             return;
 
         //已经看见玩家时不需要"去查看"，继续追就行

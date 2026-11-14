@@ -11,8 +11,8 @@ public class Enemy_MoveState : EnemyState
     private float progress;//本步进度
     private bool isStepping;//是否正在跨格
 
-    public Enemy_MoveState(Enemy enemy, StateMachine stateMachine, string animBoolName)
-        : base(enemy, stateMachine, animBoolName)
+    public Enemy_MoveState(Enemy enemy, StateMachine stateMachine, string animBoolName, string animPlayName = null)
+        : base(enemy, stateMachine, animBoolName, animPlayName)
     {
     }
 
@@ -46,9 +46,10 @@ public class Enemy_MoveState : EnemyState
     {
         base.Update();
 
-        if (enemy.chaseState != null && enemy.CanSeePlayer())//巡逻中发现玩家
+        EnemyState alert = enemy.GetAlertState();
+        if (alert != null && enemy.CanDetectPlayer())//巡逻中发现玩家
         {
-            stateMachine.ChangeState(enemy.chaseState);
+            stateMachine.ChangeState(alert);
             return;
         }
 

@@ -3,8 +3,8 @@ using UnityEngine;
 //返回巡逻状态：逐格走回巡逻路线上最近的格子
 public class Enemy_ReturnState : Enemy_PathMoveState
 {
-    public Enemy_ReturnState(Enemy enemy, StateMachine stateMachine, string animBoolName)
-        : base(enemy, stateMachine, animBoolName)
+    public Enemy_ReturnState(Enemy enemy, StateMachine stateMachine, string animBoolName, string animPlayName = null)
+        : base(enemy, stateMachine, animBoolName, animPlayName)
     {
     }
 

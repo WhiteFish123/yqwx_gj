@@ -6,21 +6,24 @@ public abstract class EntityState
     protected readonly StateMachine stateMachine;//状态机实例
     protected readonly string animBoolName;//动画bool名称
     protected readonly Animator anim;//动画组件
+    protected readonly string animPlayName;//直接播放的动画名，null 表示走 bool 参数体系
 
     protected float stateTimer;//状态计时器
     protected bool triggerCalled;//动画事件标记
 
-    public EntityState(StateMachine stateMachine, string animBoolName = null, Animator anim = null)
+    public EntityState(StateMachine stateMachine, string animBoolName = null, Animator anim = null, string animPlayName = null)
     {
         this.stateMachine = stateMachine;
         this.animBoolName = animBoolName;
         this.anim = anim;
+        this.animPlayName = animPlayName;
     }
 
     public virtual void Enter()//进入新状态：复位动画事件标记，打开对应的动画 bool。
     {
         triggerCalled = false;
         SetAnimBool(true);
+        PlayAnim();
     }
 
     public virtual void Update()//每帧更新：推进计时器并同步动画参数。
@@ -49,5 +52,13 @@ public abstract class EntityState
             return;
 
         anim.SetBool(animBoolName, value);
+    }
+
+    private void PlayAnim()//按名字直接播放，用于没有 bool 参数的 Animator Controller
+    {
+        if (anim == null || string.IsNullOrEmpty(animPlayName))
+            return;
+
+        anim.Play(animPlayName);
     }
 }

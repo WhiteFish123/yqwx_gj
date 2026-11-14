@@ -3,8 +3,8 @@ using UnityEngine;
 //待机状态：发现玩家就追；待机结束后按位置决定回巡逻还是先走回路线
 public class Enemy_IdleState : EnemyState
 {
-    public Enemy_IdleState(Enemy enemy, StateMachine stateMachine, string animBoolName)
-        : base(enemy, stateMachine, animBoolName)
+    public Enemy_IdleState(Enemy enemy, StateMachine stateMachine, string animBoolName, string animPlayName = null)
+        : base(enemy, stateMachine, animBoolName, animPlayName)
     {
     }
 
@@ -22,9 +22,10 @@ public class Enemy_IdleState : EnemyState
     {
         base.Update();
 
-        if (enemy.chaseState != null && enemy.CanSeePlayer())//待机时发现玩家
+        EnemyState alert = enemy.GetAlertState();
+        if (alert != null && enemy.CanDetectPlayer())//待机时发现玩家
         {
-            stateMachine.ChangeState(enemy.chaseState);
+            stateMachine.ChangeState(alert);
             return;
         }
 

@@ -9,8 +9,8 @@ public abstract class Enemy_PathMoveState : EnemyState
     private float progress;//本步进度 0~1
     private bool isStepping;//是否正在跨格
 
-    public Enemy_PathMoveState(Enemy enemy, StateMachine stateMachine, string animBoolName)
-        : base(enemy, stateMachine, animBoolName)
+    public Enemy_PathMoveState(Enemy enemy, StateMachine stateMachine, string animBoolName, string animPlayName = null)
+        : base(enemy, stateMachine, animBoolName, animPlayName)
     {
     }
 
