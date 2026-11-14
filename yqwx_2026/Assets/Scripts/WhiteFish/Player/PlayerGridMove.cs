@@ -32,6 +32,9 @@ public class PlayerGridMove : MonoBehaviour
         Vector2Int direction = ReadInput();
         bool holdingGrab = Input.GetKey(KeyCode.F);
 
+        if (Input.GetKeyDown(KeyCode.G))//临时调试：点燃正前方一格的箱子
+            TryIgniteFront();
+
         if (grabbedChest == null)
         {
             if (direction != Vector2Int.zero)
@@ -82,6 +85,13 @@ public class PlayerGridMove : MonoBehaviour
 
         grabbedChest = chest;
         return true;
+    }
+
+    private void TryIgniteFront()//临时调试：点燃正前方一格的箱子
+    {
+        Chest chest = Chest.At(new Vector2Int(cell.x, cell.y) + Facing);
+        if (chest != null)
+            chest.Ignite();
     }
 
     private void TryPushOrPull(Vector2Int direction)//朝向方向推，反方向拉
