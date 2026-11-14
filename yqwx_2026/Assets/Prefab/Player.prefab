@@ -263,9 +263,6 @@ MonoBehaviour:
   - {fileID: 21300000, guid: f00d5c58d25c2f1e25d3dfac4b686cf7, type: 3}
   idleUp:
   - {fileID: 21300000, guid: f00d134523fc56d6b646e38bd6c8f52b, type: 3}
-  - {fileID: 21300000, guid: f00d0b2413edc7bd8f446ae314eaa3c0, type: 3}
-  - {fileID: 21300000, guid: f00d2ae4f6e528e023149751f8c5dddb, type: 3}
-  - {fileID: 21300000, guid: f00d64b2453e26e97df1c179b1e173e3, type: 3}
   idleLeft:
   - {fileID: 21300000, guid: f00d1066c45db45e1515d8465c981997, type: 3}
   idleRight:
