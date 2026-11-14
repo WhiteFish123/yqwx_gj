@@ -48,9 +48,7 @@ MonoBehaviour:
   recovery: 0.3
   maxUses: 6
   noiseRadius: 8
+  bulletPrefab: {fileID: 6559227980366878350, guid: 51c57771175875f4284080fc0968a4dc, type: 3}
   damage: 5
-  range: 10
-  startOffset: 0.6
-  hitLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
+  bulletSpeed: 16
+  spawnOffset: 0.6

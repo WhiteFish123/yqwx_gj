@@ -1,26 +1,26 @@
 using UnityEngine;
 
-// 飞行道具：铁球扔出去之后就是它自己飞。
-// 撞到东西 → 若对方实现 IDamageable 就造成伤害 → 无论撞到什么都销毁自己。
-//
-// ★ prefab 上必须有：
-//   - Rigidbody2D：Body Type = Dynamic、Gravity Scale = 0、Collision Detection = Continuous
-//     （Kinematic 与 Static 碰撞体之间不会产生 Trigger 事件，球会穿墙）
-//   - Collider2D：勾上 Is Trigger，否则会把玩家顶开
+// 飞行道具：子弹和铁球共用这一个脚本。
+// 撞到东西 → 有 IDamageable 就造成伤害 → 生成命中特效 → 销毁自己。
 public class Projectile : MonoBehaviour
 {
     [Header("飞行")]
-    public float lifeTime = 3f;   // 保险丝：飞太久自动消失，防止场景里堆积飞不出去的球
+    public float lifeTime = 3f;//保险丝：飞太久自动消失
+
+    [Header("伤害")]
+    public HitType hitType = HitType.ironBall;//这个弹丸算哪种伤害（子弹选 gun）
+    public float damage = 1f;                 //实际伤害由武器在 Launch 时覆盖
+
+    [Header("命中特效")]
+    [Tooltip("撞到东西时生成的特效 prefab，留空则没有特效")]
+    public GameObject hitEffectPrefab;
+    [Tooltip("特效多久后自动销毁（防止特效堆积）")]
+    public float hitEffectLifeTime = 0.3f;
 
     private Rigidbody2D rb;
-    private float damage;
 
-    void Awake()
-    {
-        rb = GetComponent<Rigidbody2D>();
-    }
+    void Awake() { rb = GetComponent<Rigidbody2D>(); }
 
-    /// <summary>由武器（IronBall）在生成后立刻调用，交给它方向和速度</summary>
     public void Launch(Vector2 direction, float speed, float damageValue)
     {
         damage = damageValue;
@@ -32,18 +32,27 @@ public class Projectile : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        // 别打自己：玩家身上有 "Player" 标签（队友的敌人 AI 也用这个标签）
-        if (other.CompareTag("Player")) return;
+        if (other.CompareTag("Player")) return;//别打自己
 
         IDamageable target = other.GetComponent<IDamageable>();
         if (target != null)
         {
             HitInfo info = new HitInfo();
             info.damage = damage;
-            info.type = HitType.ironBall;
+            info.type = hitType;
             target.TakeHit(info);
         }
 
-        Destroy(gameObject);   // 撞到敌人、墙、箱子都消失
+        SpawnHitEffect();
+        Destroy(gameObject);
+    }
+
+    //生成命中特效（无论有没有特效配置都不会报错）
+    void SpawnHitEffect()
+    {
+        if (hitEffectPrefab == null) return;
+
+        GameObject fx = Instantiate(hitEffectPrefab, transform.position, Quaternion.identity);
+        Destroy(fx, hitEffectLifeTime);//★ 一定要定时销毁，否则特效会越堆越多
     }
 }
