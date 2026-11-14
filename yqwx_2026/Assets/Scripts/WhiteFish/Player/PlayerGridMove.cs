@@ -55,6 +55,20 @@ public class PlayerGridMove : MonoBehaviour
             Facing = direction;
     }
 
+    //瞬移：把玩家直接放到某一格的中心。
+    //★ 一定要在这里同步 cell，否则内部记录的还是旧格子，
+    //  下一次走路会从旧格子算方向，人就会往莫名其妙的地方迈。
+    public void TeleportTo(Vector3Int targetCell)
+    {
+        StopAllCoroutines();//万一正在跨格，先打断
+        isMoving = false;
+        grabbedChest = null;//传送会脱离箱子
+        cell = targetCell;
+
+        if (grid != null)
+            transform.position = grid.GetCellCenterWorld(targetCell);
+    }
+
     //抓住正前方相邻格的箱子
     public bool TryGrab()
     {
