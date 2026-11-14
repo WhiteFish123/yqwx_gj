@@ -34,6 +34,7 @@ public class EnemySlimeIdleTests
         Assert.IsNotNull(animator.runtimeAnimatorController, "找不到 Controller：" + ControllerPath);
 
         root.AddComponent<CapsuleCollider2D>();
+        root.AddComponent<Rigidbody2D>();
 
         return root.AddComponent<Enemy_Slime>();
     }
@@ -221,5 +222,21 @@ public class EnemySlimeIdleTests
         slime.TakeDamage(3f);
 
         Assert.IsFalse(slime.isDead);
+    }
+
+    [Test]
+    public void IdleState_WithNoPatrolPath_StaysIdle()
+    {
+        Enemy_Slime slime = CreateStartedSlime();
+        Assert.IsNull(slime.patrolPoints);
+
+        FieldInfo timer = typeof(EntityState).GetField("stateTimer",
+            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+        Assert.IsNotNull(timer, "EntityState 缺少 stateTimer 字段");
+        timer.SetValue(slime.idleState, -1f);
+
+        slime.idleState.Update();
+
+        Assert.AreSame(slime.idleState, slime.stateMachine.currentState);
     }
 }

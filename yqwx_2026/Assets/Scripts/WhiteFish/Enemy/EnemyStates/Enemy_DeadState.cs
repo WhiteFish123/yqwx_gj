@@ -1,8 +1,9 @@
 using UnityEngine;
-//敌人死亡状态
+
+//敌人死亡状态：关闭碰撞、播放死亡动画、锁死状态机并延迟销毁
 public class Enemy_DeadState : EnemyState
 {
-    private readonly Collider2D col;//碰撞体
+    private readonly Collider2D col;//碰撞体（可能为空）
     private readonly string deadAnimName;//死亡动画名
     private readonly float destroyDelay;//销毁延迟
 
@@ -17,6 +18,9 @@ public class Enemy_DeadState : EnemyState
     public override void Enter()//关碰撞、播死亡动画、锁死状态机、延迟销毁
     {
         base.Enter();
+
+        if (enemy.rb != null)//停下脚步，防止尸体滑行
+            enemy.rb.linearVelocity = Vector2.zero;
 
         if (col != null)
             col.enabled = false;
