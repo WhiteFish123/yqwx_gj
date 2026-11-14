@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 // 全屏黑幕：负责"淡出 → 做事 → 淡入"。
@@ -60,6 +61,25 @@ public class ScreenFader : MonoBehaviour
 
     /// <summary>从全黑渐变为透明</summary>
     public IEnumerator FadeIn(float duration) => FadeTo(0f, duration);
+
+    /// <summary>
+    /// 淡出 → 加载场景 → 淡入。
+    /// ★ 这个方法必须跑在 ScreenFader 自己身上（它是 DontDestroyOnLoad）：
+    ///   如果跑在会被销毁的物体上（比如车），LoadScene 那一刻协程就中断了，
+    ///   淡入永远执行不到，画面会永远停在黑屏。
+    /// </summary>
+    public IEnumerator FadeOutAndLoad(string sceneName, float duration)
+    {
+        yield return FadeOut(duration);
+
+        if (!string.IsNullOrEmpty(sceneName))
+        {
+            SceneManager.LoadScene(sceneName);
+            yield return null;//等一帧，让新场景就绪
+        }
+
+        yield return FadeIn(duration);
+    }
 
     private IEnumerator FadeTo(float targetAlpha, float duration)
     {

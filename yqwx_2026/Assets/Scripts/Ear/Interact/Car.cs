@@ -1,6 +1,4 @@
-using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 // 需要"油"才能通关的车。
 //
@@ -8,8 +6,9 @@ using UnityEngine.SceneManagement;
 //   - 手上有油 → 直接卸下（卸下的物品不会回背包，等于消耗）
 //   - 背包里有油 → 从背包拿走一件
 //
-// 加满之后：锁住玩家输入 → 黑屏淡出 → 切到 winSceneName（默认回主菜单）→ 淡入。
-// 想改成"停在原地显示通关画面"，把 winSceneName 留空即可（只在 Console 打印）。
+// 加满之后：锁住玩家输入 → 交给常驻的 ScreenFader 做「淡出 → 切胜利场景 → 淡入」。
+// ★ 为什么流程不写在车自己身上：切场景会销毁车，跑在车身上的协程会当场中断，
+//   淡入就永远执行不到，画面会永远停在黑屏。
 public class Car : MonoBehaviour, IInteractable
 {
     [Header("需要的物品")]
@@ -17,8 +16,8 @@ public class Car : MonoBehaviour, IInteractable
     public ItemData requiredItem;
 
     [Header("通关")]
-    [Tooltip("加满油后切到哪个场景。留空 = 不切场景，只在 Console 打印「通关」")]
-    public string winSceneName = "StartScene";
+    [Tooltip("加满油后进入哪个场景。留空 = 不切场景，只闪一下黑屏当作反馈")]
+    public string winSceneName = "Victory";
 
     [Tooltip("黑屏淡出/淡入各用多久")]
     public float fadeDuration = 0.6f;
@@ -50,10 +49,13 @@ public class Car : MonoBehaviour, IInteractable
         //没带油：按 E 不做任何事（提示里已经写了"需要油"）
         if (!HasRequiredItem()) return;
 
+        //目标场景没登记就先别消耗油，也别黑屏
+        if (!IsWinSceneReady()) return;
+
         if (!ConsumeRequiredItem()) return;
 
         fuelled = true;
-        StartCoroutine(WinRoutine());
+        FinishLevel();
     }
 
     // ===== 判断 / 消耗 =====
@@ -85,25 +87,31 @@ public class Car : MonoBehaviour, IInteractable
         return bag != null && bag.ConsumeItem(requiredItem);
     }
 
+    //胜利场景是否可用（必须先加进 Build Settings 的 Scene List）
+    private bool IsWinSceneReady()
+    {
+        if (string.IsNullOrEmpty(winSceneName))
+            return true;//不切场景也允许
+
+        if (Application.CanStreamedLevelBeLoaded(winSceneName))
+            return true;
+
+        Debug.LogError("Car：场景 \"" + winSceneName + "\" 不在 Build Settings 的 Scene List 里，" +
+                       "无法进入胜利界面。请先把胜利场景拖进 Scene List。", this);
+        return false;
+    }
+
     // ===== 通关表现 =====
 
-    private IEnumerator WinRoutine()
+    private void FinishLevel()
     {
         PlayerBrain brain = FindFirstObjectByType<PlayerBrain>();
         if (brain != null) brain.inputEnabled = false;
 
-        yield return ScreenFader.Instance.FadeOut(fadeDuration);
+        Debug.Log("Car：通关，进入 " + (string.IsNullOrEmpty(winSceneName) ? "（未配置场景）" : winSceneName));
 
-        if (string.IsNullOrEmpty(winSceneName))
-        {
-            Debug.Log("通关！（没有配置 Win Scene Name，所以停在黑屏）");
-            yield break;
-        }
-
-        SceneManager.LoadScene(winSceneName);
-        yield return null;//等一帧，让新场景就绪
-
-        //ScreenFader 是 DontDestroyOnLoad，切场景后还在，所以能接着淡入
-        yield return ScreenFader.Instance.FadeIn(fadeDuration);
+        //跑在常驻的 ScreenFader 上，切场景后它还活着
+        ScreenFader.Instance.StartCoroutine(
+            ScreenFader.Instance.FadeOutAndLoad(winSceneName, fadeDuration));
     }
 }
