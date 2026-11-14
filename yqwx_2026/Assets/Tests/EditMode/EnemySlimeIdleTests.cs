@@ -126,7 +126,7 @@ public class EnemySlimeIdleTests
         Enemy_Slime slime = CreateSlime();
         InvokeLifecycle(slime, "Awake");
 
-        Assert.AreEqual(3f, slime.currentHealth);
+        Assert.AreEqual(1f, slime.currentHealth);
         Assert.IsFalse(slime.isDead);
     }
 
@@ -135,9 +135,9 @@ public class EnemySlimeIdleTests
     {
         Enemy_Slime slime = CreateStartedSlime();
 
-        slime.TakeDamage(1f);
+        slime.TakeDamage(0.5f);
 
-        Assert.AreEqual(2f, slime.currentHealth);
+        Assert.AreEqual(0.5f, slime.currentHealth);
         Assert.IsFalse(slime.isDead);
     }
 
@@ -149,7 +149,7 @@ public class EnemySlimeIdleTests
         slime.TakeDamage(0f);
         slime.TakeDamage(-1f);
 
-        Assert.AreEqual(3f, slime.currentHealth);
+        Assert.AreEqual(1f, slime.currentHealth);
     }
 
     [Test]
