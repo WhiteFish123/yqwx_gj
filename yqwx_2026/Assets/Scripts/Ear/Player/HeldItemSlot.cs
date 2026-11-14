@@ -1,4 +1,7 @@
-// 手持栏：管理手上拿着的东西，并负责使用它们
+// 手持栏：管理"手上拿着哪一件物品"，并负责按 J 使用它。
+// ★ 手上存的是一个 InventoryItem（一件具体物品），不是 prefab。
+//   因为使用次数存在物品身上；如果传 prefab，每次装备都会新建物品、次数被重置成满，
+//   就会变成"丢下再捡起来 = 无限子弹"。
 using UnityEngine;
 
 public class HeldItemSlot : MonoBehaviour
@@ -6,78 +9,109 @@ public class HeldItemSlot : MonoBehaviour
     [Header("设置")]
     public KeyCode useKey = KeyCode.J;
 
-    [Header("测试用")]
-    public GameObject startItem;
+    [Header("测试用（可留空）")]
+    public ItemData startItem;   // 开局手上拿的测试物品
 
-    private PlayerMove move;
-    private IUsable current;            // 手上东西的"用法"
-    private GameObject holderInstance;  // 手上东西的实例
-    private GameObject heldPrefab;      // 手上东西的 prefab
+    private PlayerGridMove move;
+    private IUsable current;             // 手上物品的"用法"（武器有，血瓶之类没有）
+    private GameObject holderInstance;   // 手上物品的实例（由 heldPrefab 例化出来）
+    private InventoryItem heldItem;      // ★ 手上这件物品（剩余次数存在这里面）
 
-    // ===== 对外只读状态 =====
-    public bool HasItem => heldPrefab != null;        // 手上有没有东西
-    public bool CanUseHeldItem => current != null;    // 手上这件能不能按 J 用（非武器为 false）
-    public GameObject HeldPrefab => heldPrefab;
-    public string HeldItemName => heldPrefab != null ? heldPrefab.name : "";
+    public bool HasItem => heldItem != null && holderInstance != null;
+    public InventoryItem HeldItem => heldItem;
+    public WeaponBase HeldWeapon => current as WeaponBase;
 
-    void Awake() { move = GetComponent<PlayerMove>(); }
+    public string HeldItemName =>
+        heldItem != null && heldItem.data != null ? heldItem.data.itemName : "";
+
+    void Awake()
+    {
+        move = GetComponent<PlayerGridMove>();
+    }
 
     void Start()
     {
-        if (startItem != null) Equip(startItem);   // 测试用：开局手上拿什么
+        if (startItem != null) Equip(new InventoryItem(startItem));
     }
 
     void Update()
     {
-        if (current == null) return;                    // 手上没有能用的东西
+        // 武器次数用完会自毁；这里发现实例没了，就把物品也清掉（物品被消耗，不回背包）
+        if (heldItem != null && holderInstance == null)
+        {
+            Debug.Log(HeldItemName + " 已耗尽，手上空了");
+            heldItem = null;
+            current = null;
+        }
+
+        if (current == null) return;
         if (!Input.GetKeyDown(useKey)) return;
 
         float recovery = current.Use(transform.position, Facing);
-        if (recovery > 0f && move != null) move.LockMovement(recovery);   // 后摇
+        if (recovery > 0f && move != null) move.LockMovement(recovery);   // 后摇：锁住移动
+
+        SyncUsesToItem();   // 把武器的剩余次数写回物品
     }
 
-    Vector2 Facing => move != null ? move.facing : Vector2.down;
+    //朝向：格子移动的 Facing 是 Vector2Int，这里转成 Vector2 给武器用
+    Vector2 Facing => move != null ? new Vector2(move.Facing.x, move.Facing.y) : Vector2.down;
 
-    // ===== 背包调这两个 =====
-
-    // 装备：只在手上空着时成功。
-    // 返回 true = 装上了；false = 手上有东西 / 参数为空（此时状态一点都不变）
-    public bool Equip(GameObject itemPrefab)
+    // 次数以"物品"为准，武器只是临时镜像：每次用完把它读回来写进物品
+    void SyncUsesToItem()
     {
-        if (itemPrefab == null) return false;
+        WeaponBase weapon = current as WeaponBase;
+        if (weapon != null && heldItem != null)
+            heldItem.SetRemainingUses(weapon.RemainingUses);
+    }
 
-        if (HasItem)
-        {
-            Debug.LogWarning("手上已经有 " + HeldItemName + "，要换请先调用 Unequip()", this);
+    // ===== 背包 / 地上的物品只调这两个方法 =====
+
+    /// <summary>装备一件物品。只在手上空着时成功，返回 true = 装上了</summary>
+    public bool Equip(InventoryItem item)
+    {
+        if (item == null || item.data == null || item.data.heldPrefab == null)
             return false;
+
+        // 上一次的物品可能已经自毁，先把残留状态清掉
+        if (heldItem != null && holderInstance == null)
+        {
+            heldItem = null;
+            current = null;
         }
 
-        holderInstance = Instantiate(itemPrefab, transform);
+        if (HasItem) return false;
+
+        holderInstance = Instantiate(item.data.heldPrefab, transform);
         holderInstance.transform.localPosition = Vector3.zero;
 
-        // 拿在手上：隐藏外观 + 关掉碰撞
-        //同一个 prefab 在地上时是可见、可拾取的
+        // 万一 heldPrefab 上带外观或碰撞体，拿在手上时一律关掉（不影响它作为地上物品的形态）
         foreach (Renderer r in holderInstance.GetComponentsInChildren<Renderer>(true)) r.enabled = false;
         foreach (Collider2D c in holderInstance.GetComponentsInChildren<Collider2D>(true)) c.enabled = false;
 
-        heldPrefab = itemPrefab;
+        heldItem = item;
         current = holderInstance.GetComponent<IUsable>();
 
+        // ★ 把物品身上的次数灌给武器；之后武器每用一次就少一次
+        WeaponBase weapon = holderInstance.GetComponent<WeaponBase>();
+        if (weapon != null) weapon.ApplyItemUses(item.data.maxUses, item.remainingUses);
+
         if (current == null)
-            Debug.Log("手上物品没有 IUsable，无法使用：" + itemPrefab.name);
+            Debug.Log("手上物品没有 IUsable（血瓶、钥匙这类属正常）：" + item.data.itemName);
 
         return true;
     }
 
-    // 卸下：把手上的东西交出去（背包整理时用）。返回原来拿的是什么，没有就 null
-    public GameObject Unequip()
+    /// <summary>卸下：返回手上这件物品（背包用它收回），手上没有就返回 null</summary>
+    public InventoryItem Unequip()
     {
-        GameObject result = heldPrefab;
+        SyncUsesToItem();   // 先把次数写回物品，再卸下
+
+        InventoryItem result = heldItem;
 
         if (holderInstance != null) Destroy(holderInstance);
         holderInstance = null;
         current = null;
-        heldPrefab = null;
+        heldItem = null;
 
         return result;
     }

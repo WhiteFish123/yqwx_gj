@@ -11,9 +11,19 @@ public class PlayerGridMove : MonoBehaviour
     private Vector3Int cell;//当前所在格
     private bool isMoving;//移动协程进行中
     private Chest grabbedChest;//抓住的箱子，null 表示没抓
+    private float lockTimer;//后摇锁定剩余时间（秒），>0 时不能开始新的移动
 
     public Vector2Int Facing { get; set; } = Vector2Int.down;//朝向，决定推拉方向
     public Vector3Int Cell => cell;
+
+    /// <summary>是否处于后摇/僵直锁定中（武器后摇用）</summary>
+    public bool IsLocked => lockTimer > 0f;
+
+    /// <summary>锁住移动 seconds 秒：这段时间内不接受新的移动输入（已有的一步会走完）</summary>
+    public void LockMovement(float seconds)
+    {
+        if (seconds > lockTimer) lockTimer = seconds;
+    }
 
     private void Start()
     {
@@ -26,8 +36,14 @@ public class PlayerGridMove : MonoBehaviour
 
     private void Update()
     {
+        if (lockTimer > 0f)
+            lockTimer -= Time.deltaTime;//后摇计时：即使正在移动也要继续倒数
+
         if (isMoving || grid == null)
             return;
+
+        if (lockTimer > 0f)
+            return;//后摇期间不接受新的移动输入
 
         Vector2Int direction = ReadInput();
         bool holdingGrab = Input.GetKey(KeyCode.F);

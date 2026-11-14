@@ -8,10 +8,12 @@ public struct HitInfo
     public HitType type;        // 攻击到的种类
 }
 
+// 被什么打中的（敌人可以用它决定播哪个受击表现）
 public enum HitType
 {
-    knife,    // 近战
-    gun       // 远程
+    knife,      // 刀：近战
+    gun,        // 枪：远程射线
+    ironBall    // 铁球：远程投掷物
 }
 
 // 能被攻击的接口

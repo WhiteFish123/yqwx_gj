@@ -44,8 +44,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10b599703ccc60545a23b88b44d88906, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cooldown: 3
+  recovery: 0.3
+  maxUses: 6
   damage: 5
   range: 10
-  fireRate: 4
-  recovery: 0.3
   startOffset: 0.6
+  hitLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
