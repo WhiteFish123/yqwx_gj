@@ -30,7 +30,6 @@ public class PlayerMove : MonoBehaviour
         {
             horizontalWins = true;
         }
-        rb.linearVelocity = new Vector2(x, y).normalized * moveSpeed;
         float finalX = x;
         float finalY = y;
         if (x != 0f && y != 0f)//判断是向上下还是左右移动

@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 4599301454512864154}
   - component: {fileID: 1109516273532875510}
   - component: {fileID: 268130506495987008}
-  - component: {fileID: 3637639594827120347}
+  - component: {fileID: -2234969406794140957}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -114,7 +114,7 @@ Rigidbody2D:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
@@ -176,8 +176,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 506db77b4f78d0f4681707599604d4b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 5
---- !u!114 &3637639594827120347
+  moveSpeed: 100
+  accel: 200
+--- !u!114 &-2234969406794140957
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -186,6 +187,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 5208354841333560807}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 74b9b21d6e829b34daa4d80b60c5071d, type: 3}
+  m_Script: {fileID: 11500000, guid: 3928c9810eb34fe41af0d392858ae331, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  interactKey: 101
+  interactRange: 5
+  interactableLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  promptText: {fileID: 0}

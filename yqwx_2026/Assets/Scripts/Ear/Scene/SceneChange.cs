@@ -11,6 +11,10 @@ public class SceneChange : MonoBehaviour
     {
         SceneManager.LoadScene("StartScene");
     }
+    public void LoadSLScene()
+    {
+        SceneManager.LoadScene("SLScene");
+    }
     public void QuitScene()
     {
         Application.Quit();
