@@ -1334,6 +1334,7 @@ GameObject:
   - component: {fileID: 337012895}
   - component: {fileID: 337012894}
   - component: {fileID: 337012897}
+  - component: {fileID: 337012898}
   m_Layer: 0
   m_Name: Chest_Wooden_1
   m_TagString: Untagged
@@ -1434,6 +1435,22 @@ MonoBehaviour:
   bodyRenderer: {fileID: 1032608268}
   burnDuration: 5
   charredColor: {r: 0.25, g: 0.22, b: 0.2, a: 1}
+--- !u!114 &337012898
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 337012893}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2415e3499bf921849b5327f331dfe8a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  yOffset: 0
+  precision: 100
+  baseOrder: 10000
+  showDebug: 0
 --- !u!1 &366217196
 GameObject:
   m_ObjectHideFlags: 0
@@ -1767,6 +1784,7 @@ GameObject:
   - component: {fileID: 398070997}
   - component: {fileID: 398070996}
   - component: {fileID: 398070995}
+  - component: {fileID: 398070999}
   m_Layer: 0
   m_Name: Chest_Wooden_3
   m_TagString: Untagged
@@ -1867,6 +1885,22 @@ Transform:
   - {fileID: 1004477543}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &398070999
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 398070994}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2415e3499bf921849b5327f331dfe8a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  yOffset: 0
+  precision: 100
+  baseOrder: 10000
+  showDebug: 0
 --- !u!1 &418460487
 GameObject:
   m_ObjectHideFlags: 0
@@ -2620,6 +2654,9 @@ MonoBehaviour:
   useButton: {fileID: 466134713}
   tooltipGroup: {fileID: 664768048}
   useButtonGroup: {fileID: 466134717}
+  dropKey: 120
+  dropDistance: 0.8
+  dropButtonGap: 6
   fontOverride: {fileID: 11400000, guid: 7272b53bc47feb147beb527da5f4836e, type: 2}
 --- !u!114 &574797385
 MonoBehaviour:
@@ -5207,6 +5244,7 @@ GameObject:
   - component: {fileID: 1043582458}
   - component: {fileID: 1043582457}
   - component: {fileID: 1043582456}
+  - component: {fileID: 1043582460}
   m_Layer: 0
   m_Name: Chest_Wooden_2
   m_TagString: Untagged
@@ -5307,6 +5345,22 @@ Transform:
   - {fileID: 1289539145}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1043582460
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1043582455}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2415e3499bf921849b5327f331dfe8a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  yOffset: 0
+  precision: 100
+  baseOrder: 10000
+  showDebug: 0
 --- !u!1 &1065490008
 GameObject:
   m_ObjectHideFlags: 0
@@ -5592,6 +5646,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   chaseDuration: 0.5
+  investigateDuration: 0.3
   attackTriggerDistance: 2
   attackDashCells: 3
   attackWindupDelay: 0.083
@@ -7589,6 +7644,7 @@ GameObject:
   - component: {fileID: 1449880440}
   - component: {fileID: 1449880443}
   - component: {fileID: 1449880442}
+  - component: {fileID: 1449880444}
   m_Layer: 8
   m_Name: Obstacle_A
   m_TagString: Untagged
@@ -7725,6 +7781,22 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &1449880444
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1449880439}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2415e3499bf921849b5327f331dfe8a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  yOffset: 0
+  precision: 100
+  baseOrder: 10000
+  showDebug: 0
 --- !u!1 &1487742067
 GameObject:
   m_ObjectHideFlags: 0
@@ -8852,6 +8924,8 @@ GameObject:
   - component: {fileID: 1847124769}
   - component: {fileID: 1847124770}
   - component: {fileID: 1847124772}
+  - component: {fileID: 1847124773}
+  - component: {fileID: 1847124774}
   m_Layer: 0
   m_Name: Player_Test
   m_TagString: Player
@@ -8959,6 +9033,35 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 71d321fcbab9cbf4cbc98dbd1399435c, type: 2}
   - {fileID: 11400000, guid: cc4997b1f2f354343ace2254d416f451, type: 2}
   startingCounts: 030000000200000001000000
+--- !u!114 &1847124773
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1847124766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e22fa0039b97d0844997c0103bf48455, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  grabKey: 102
+--- !u!114 &1847124774
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1847124766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2415e3499bf921849b5327f331dfe8a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  yOffset: 0
+  precision: 100
+  baseOrder: 10000
+  showDebug: 0
 --- !u!1 &1849806256
 GameObject:
   m_ObjectHideFlags: 0

@@ -5,6 +5,7 @@
         "WhiteFish.StateMachine",
         "WhiteFish.Enemy",
         "WhiteFish.Chest",
+        "WhiteFish.YSort",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
