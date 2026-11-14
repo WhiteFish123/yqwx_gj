@@ -81,6 +81,51 @@ public class Inventory : MonoBehaviour
         return true;
     }
 
+    //放进一件"已经存在"的物品（例如从手上收回背包）。
+    //★ 与 AddItem 的区别：不新建 InventoryItem，所以剩余使用次数不会被重置。
+    public bool AddExistingItem(InventoryItem item)
+    {
+        if (item == null || item.data == null)
+            return false;
+
+        for (int i = 0; i < SlotCount; i++)
+        {
+            if (slots[i] != null)
+                continue;
+
+            slots[i] = item;
+            OnChanged?.Invoke();
+            return true;
+        }
+
+        return false;//没有空格子
+    }
+
+    //整格拿走（丢弃到地上、装备到手上时用）。返回那件物品，空格子返回 null。
+    public InventoryItem RemoveItem(int index)
+    {
+        if (index < 0 || index >= SlotCount)
+            return null;
+
+        InventoryItem item = slots[index];
+        slots[index] = null;
+
+        OnChanged?.Invoke();
+        return item;
+    }
+
+    //还有没有空格子（拾取时用来判断"背包放不放得下"）
+    public bool HasEmptySlot()
+    {
+        for (int i = 0; i < SlotCount; i++)
+        {
+            if (slots[i] == null)
+                return true;
+        }
+
+        return false;
+    }
+
     private void GiveStartingItems()//开局发放测试道具
     {
         for (int i = 0; i < startingItems.Count; i++)

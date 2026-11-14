@@ -10,6 +10,7 @@ public class Enemy_Slime : Enemy
         chaseState = new Enemy_ChaseState(this, stateMachine, "Chase");
         attackState = new Enemy_AttackState(this, stateMachine, "Slime_Attack", "Slime_Move");
         returnState = new Enemy_ReturnState(this, stateMachine, "Move");
+        investigateState = new Enemy_InvestigateState(this, stateMachine, "Move");//调查声音，复用走路动画
         deadState = new Enemy_DeadState(this, stateMachine, "Slime_Dead", 2f);
     }
 

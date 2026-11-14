@@ -44,8 +44,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b470fb280a490d745bea6a8396c8a955, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cooldown: 2
+  recovery: 0.5
+  maxUses: -1
   damage: 1
   reach: 1.5
   width: 1.5
-  cooldown: 2
-  recovery: 0.5

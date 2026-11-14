@@ -147,5 +147,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2df83bb7010e9fe499857129dd2674bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  itemPrefab: {fileID: 4422822878424949041, guid: b622324ffe51d3e48a230eccb7259066, type: 3}
-  displayName: "\u5200"
+  itemData: {fileID: 11400000, guid: 0718293a4b5c6d7e8f90a1b2c3d4e5f6, type: 2}
+  remainingUses: -1
