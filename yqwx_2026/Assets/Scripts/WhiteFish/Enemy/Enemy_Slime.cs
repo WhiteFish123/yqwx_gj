@@ -7,7 +7,7 @@ public class Enemy_Slime : Enemy
 
         idleState = new Enemy_IdleState(this, stateMachine, "Idle");
         moveState = new Enemy_MoveState(this, stateMachine, "Move");
-        chaseState = new Enemy_ChaseState(this, stateMachine, "Move");
+        chaseState = new Enemy_ChaseState(this, stateMachine, "Chase");
         attackState = new Enemy_AttackState(this, stateMachine, "Slime_Attack", "Slime_Move");
         returnState = new Enemy_ReturnState(this, stateMachine, "Move");
         deadState = new Enemy_DeadState(this, stateMachine, "Slime_Dead", 2f);

@@ -25,7 +25,6 @@ public class Enemy_AttackState : EnemyState
     private bool isStepping;//是否正在跨格
 
     private float elapsed;//攻击已进行时间
-    private bool originalFlipX;//进入前的精灵朝向
 
     public Enemy_AttackState(Enemy enemy, StateMachine stateMachine, string attackAnimName, string recoverAnimName)
         : base(enemy, stateMachine, null)//攻击不参与 bool 参数体系
@@ -47,14 +46,6 @@ public class Enemy_AttackState : EnemyState
         phase = Phase.Windup;
         phaseTimer = enemy.attackWindupDelay;
 
-        if (enemy.spriteRenderer != null)
-        {
-            originalFlipX = enemy.spriteRenderer.flipX;
-
-            if (enemy.flipAttackSprite)//攻击美术方向与移动相反时翻转
-                enemy.spriteRenderer.flipX = !originalFlipX;
-        }
-
         if (anim != null)
         {
             anim.speed = 1f;
@@ -72,8 +63,7 @@ public class Enemy_AttackState : EnemyState
         if (anim != null)
             anim.speed = 1f;//无论停在哪个阶段都要恢复动画速度
 
-        if (enemy.spriteRenderer != null)//还原翻转，交给后续状态重新设置
-            enemy.spriteRenderer.flipX = originalFlipX;
+        SetTrail(false);//退出时关闭拖尾
 
         base.Exit();
     }
@@ -131,6 +121,7 @@ public class Enemy_AttackState : EnemyState
             anim.speed = 1f;//继续播放剩下的动画
 
         phase = Phase.Dash;
+        SetTrail(true);//冲刺阶段开启拖尾
     }
 
     private void UpdateDash()//逐格冲刺
@@ -197,12 +188,19 @@ public class Enemy_AttackState : EnemyState
         if (anim != null)
             anim.speed = 1f;
 
-        if (enemy.spriteRenderer != null)
-            enemy.spriteRenderer.flipX = originalFlipX;
+        SetTrail(false);//冲刺结束关闭拖尾
 
         if (anim != null && !string.IsNullOrEmpty(recoverAnimName))
             anim.Play(recoverAnimName);
 
         stateMachine.ChangeState(enemy.chaseState);
+    }
+
+    private void SetTrail(bool on)//开关冲刺拖尾特效
+    {
+        if (enemy.trailEffect == null)
+            return;
+
+        enemy.trailEffect.SetActive(on);//激活时 Animator 会自动从头播放拖尾动画
     }
 }

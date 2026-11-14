@@ -40,11 +40,12 @@ public class Enemy : MonoBehaviour
     public float attackHoldTime = 0.1f;//到第二帧后原地停顿的时长
     public float attackDashDuration = 0.1f;//冲刺时走一格用时
     public float attackAnimLength = 0.42f;//攻击动画时长，冲刺早了要等它播完
-    public bool flipAttackSprite = true;//攻击美术方向与移动相反时翻转精灵
     public float attackCooldown = 0.2f;//攻击结束后的冷却时间
     public float nextAttackTime { get; private set; }//下次可攻击的时间点
     public EnemyVision vision { get; private set; }//视野
     public GridPathfinder pathfinder { get; private set; }//寻路
+    public GameObject trailEffect { get; private set; }//冲刺拖尾特效对象
+    public float trailOffset = 0.45f;//拖尾相对身体后方的偏移距离
     public Vector2Int facing { get; private set; } = Vector2Int.right;//四向朝向
 
     protected virtual void Awake()//获取组件
@@ -52,6 +53,14 @@ public class Enemy : MonoBehaviour
         anim = GetComponentInChildren<Animator>();
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
+
+        Transform trailTransform = transform.Find("Animation/TrailEffect");
+        if (trailTransform != null)
+        {
+            trailEffect = trailTransform.gameObject;
+            trailEffect.transform.localPosition = new Vector3(-facing.x * trailOffset, -facing.y * trailOffset, 0f);
+        }
+
         stateMachine = new StateMachine();
         currentHealth = maxHealth;
 
@@ -149,6 +158,18 @@ public class Enemy : MonoBehaviour
             return;
 
         facing = direction;
+
+        if (trailEffect != null)//拖尾特效保持在身体背面；上下移动时整体转 90 度
+        {
+            trailEffect.transform.localPosition = new Vector3(-direction.x * trailOffset, -direction.y * trailOffset, 0f);
+
+            float angle = direction.x != 0 ? 0f : 90f;//左右用横向素材，上下转成纵向
+            trailEffect.transform.localRotation = Quaternion.Euler(0f, 0f, angle);
+
+            SpriteRenderer trailSprite = trailEffect.GetComponent<SpriteRenderer>();
+            if (trailSprite != null)
+                trailSprite.flipX = direction.x != 0 ? direction.x > 0 : direction.y > 0;//让浓的一端朝向身体
+        }
 
         if (spriteRenderer == null)
             return;
