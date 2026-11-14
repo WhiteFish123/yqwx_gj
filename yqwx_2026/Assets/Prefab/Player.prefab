@@ -15,6 +15,9 @@ GameObject:
   - component: {fileID: 268130506495987008}
   - component: {fileID: -2234969406794140957}
   - component: {fileID: -3473615025252362922}
+  - component: {fileID: -4110336269317162866}
+  - component: {fileID: -6855910375618497728}
+  - component: {fileID: 3233832075560255784}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -177,7 +180,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 506db77b4f78d0f4681707599604d4b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 100
+  moveSpeed: 5
   accel: 200
 --- !u!114 &-2234969406794140957
 MonoBehaviour:
@@ -192,7 +195,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   interactKey: 101
-  interactRange: 5
+  interactRange: 1.5
   interactableLayers:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -211,3 +214,70 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   useKey: 106
   startItem: {fileID: 0}
+--- !u!58 &-4110336269317162866
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5208354841333560807}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 0.5
+--- !u!114 &-6855910375618497728
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5208354841333560807}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 506db77b4f78d0f4681707599604d4b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveSpeed: 5
+  accel: 200
+--- !u!114 &3233832075560255784
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5208354841333560807}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b470fb280a490d745bea6a8396c8a955, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  damage: 1
+  reach: 1
+  width: 0.8
+  cooldown: 2
+  recovery: 0.5
