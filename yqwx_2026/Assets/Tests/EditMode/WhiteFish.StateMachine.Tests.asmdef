@@ -4,6 +4,7 @@
     "references": [
         "WhiteFish.StateMachine",
         "WhiteFish.Enemy",
+        "WhiteFish.Chest",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

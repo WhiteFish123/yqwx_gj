@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-//临时玩家控制：按 WASD（或方向键）上下左右逐格移动
+//临时玩家控制：按 WASD（或方向键）上下左右逐格移动，按住 F 可抓取正前方的箱子推拉
 public class PlayerGridMove : MonoBehaviour
 {
     [SerializeField] private Grid grid;//所在网格，留空则自动查找
@@ -10,6 +10,10 @@ public class PlayerGridMove : MonoBehaviour
 
     private Vector3Int cell;//当前所在格
     private bool isMoving;//移动协程进行中
+    private Chest grabbedChest;//抓住的箱子，null 表示没抓
+
+    public Vector2Int Facing { get; set; } = Vector2Int.down;//朝向，决定推拉方向
+    public Vector3Int Cell => cell;
 
     private void Start()
     {
@@ -26,14 +30,30 @@ public class PlayerGridMove : MonoBehaviour
             return;
 
         Vector2Int direction = ReadInput();
-        if (direction == Vector2Int.zero)
-            return;
+        bool holdingGrab = Input.GetKey(KeyCode.F);
 
-        Vector3Int target = new Vector3Int(cell.x + direction.x, cell.y + direction.y, cell.z);
-        if (IsBlocked(target))
-            return;
+        if (grabbedChest == null)
+        {
+            if (direction != Vector2Int.zero)
+                Facing = direction;
 
-        StartCoroutine(MoveRoutine(target));
+            if (holdingGrab && TryGrab())
+                return;
+
+            if (direction != Vector2Int.zero)
+                TryWalk(direction);
+
+            return;
+        }
+
+        if (!holdingGrab)//松开 F 立即释放，当帧不再移动
+        {
+            grabbedChest = null;
+            return;
+        }
+
+        if (direction != Vector2Int.zero)
+            TryPushOrPull(direction);
     }
 
     private Vector2Int ReadInput()//读取方向输入（一次一格）
@@ -51,6 +71,62 @@ public class PlayerGridMove : MonoBehaviour
             return Vector2Int.right;
 
         return Vector2Int.zero;
+    }
+
+    private bool TryGrab()//抓住正前方相邻格的箱子
+    {
+        Vector2Int playerCell = new Vector2Int(cell.x, cell.y);
+        Chest chest = Chest.At(playerCell + Facing);
+        if (!ChestPushPullRules.CanGrab(playerCell, Facing, chest != null))
+            return false;
+
+        grabbedChest = chest;
+        return true;
+    }
+
+    private void TryPushOrPull(Vector2Int direction)//朝向方向推，反方向拉
+    {
+        ChestMoveKind kind = ChestPushPullRules.Resolve(Facing, direction);
+        if (kind == ChestMoveKind.None)
+            return;
+
+        Vector2Int playerCell = new Vector2Int(cell.x, cell.y);
+        if (!ChestPushPullRules.CanExecute(playerCell, grabbedChest.Cell, Facing, kind,
+                IsCellBlocked, HasOtherChest))
+            return;
+
+        ChestPushPullRules.TryComputeTargets(playerCell, grabbedChest.Cell, Facing, kind,
+            out Vector2Int playerTarget, out Vector2Int chestTarget);
+
+        StartCoroutine(MoveBothRoutine(playerTarget, grabbedChest, chestTarget));
+    }
+
+    private bool IsCellBlocked(Vector2Int target)//墙体/敌人占用，口径与 IsBlocked 一致
+    {
+        return IsBlocked(new Vector3Int(target.x, target.y, cell.z));
+    }
+
+    private bool HasOtherChest(Vector2Int target)//目标格是否被别的箱子占着
+    {
+        Chest chest = Chest.At(target);
+        return chest != null && chest != grabbedChest;
+    }
+
+    private void TryWalk(Vector2Int direction)//普通走路
+    {
+        Vector3Int target = new Vector3Int(cell.x + direction.x, cell.y + direction.y, cell.z);
+        if (!IsWalkable(target))
+            return;
+
+        StartCoroutine(MoveRoutine(target));
+    }
+
+    private bool IsWalkable(Vector3Int target)//墙、敌人、箱子都不能进
+    {
+        if (IsBlocked(target))
+            return false;
+
+        return Chest.At(new Vector2Int(target.x, target.y)) == null;
     }
 
     private bool IsBlocked(Vector3Int target)//目标格是否被挡住
@@ -93,6 +169,29 @@ public class PlayerGridMove : MonoBehaviour
 
         transform.position = end;
         cell = target;
+        isMoving = false;
+    }
+
+    private IEnumerator MoveBothRoutine(Vector2Int playerTarget, Chest chest, Vector2Int chestTarget)//玩家与箱子同步移动一格
+    {
+        isMoving = true;
+
+        Vector3Int targetCell = new Vector3Int(playerTarget.x, playerTarget.y, cell.z);
+        Vector3 playerStart = transform.position;
+        Vector3 playerEnd = grid.GetCellCenterWorld(targetCell);
+
+        chest.MoveTo(chestTarget, moveDuration);
+
+        float elapsed = 0f;
+        while (elapsed < moveDuration)
+        {
+            elapsed += Time.deltaTime;
+            transform.position = Vector3.Lerp(playerStart, playerEnd, elapsed / moveDuration);
+            yield return null;
+        }
+
+        transform.position = playerEnd;
+        cell = targetCell;
         isMoving = false;
     }
 }
