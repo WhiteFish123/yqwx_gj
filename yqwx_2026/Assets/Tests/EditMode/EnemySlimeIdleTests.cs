@@ -1,8 +1,10 @@
 using System.Reflection;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 public class EnemySlimeIdleTests
 {
@@ -31,7 +33,17 @@ public class EnemySlimeIdleTests
 
         Assert.IsNotNull(animator.runtimeAnimatorController, "找不到 Controller：" + ControllerPath);
 
+        root.AddComponent<CapsuleCollider2D>();
+
         return root.AddComponent<Enemy_Slime>();
+    }
+
+    private Enemy_Slime CreateStartedSlime()
+    {
+        Enemy_Slime slime = CreateSlime();
+        InvokeLifecycle(slime, "Awake");
+        InvokeLifecycle(slime, "Start");
+        return slime;
     }
 
     private static void InvokeLifecycle(object target, string methodName)
@@ -106,5 +118,108 @@ public class EnemySlimeIdleTests
 
         Assert.IsNotNull(field, "EntityState 缺少 animBoolName 字段");
         Assert.AreEqual("Idle", field.GetValue(slime.idleState));
+    }
+
+    [Test]
+    public void Awake_InitializesHealthToMax()
+    {
+        Enemy_Slime slime = CreateSlime();
+        InvokeLifecycle(slime, "Awake");
+
+        Assert.AreEqual(3f, slime.currentHealth);
+        Assert.IsFalse(slime.isDead);
+    }
+
+    [Test]
+    public void TakeDamage_ReducesHealth()
+    {
+        Enemy_Slime slime = CreateStartedSlime();
+
+        slime.TakeDamage(1f);
+
+        Assert.AreEqual(2f, slime.currentHealth);
+        Assert.IsFalse(slime.isDead);
+    }
+
+    [Test]
+    public void TakeDamage_ZeroOrNegative_DoesNothing()
+    {
+        Enemy_Slime slime = CreateStartedSlime();
+
+        slime.TakeDamage(0f);
+        slime.TakeDamage(-1f);
+
+        Assert.AreEqual(3f, slime.currentHealth);
+    }
+
+    [Test]
+    public void TakeDamage_Fatal_SwitchesToDeadState()
+    {
+        Enemy_Slime slime = CreateStartedSlime();
+
+        slime.TakeDamage(3f);
+
+        Assert.IsTrue(slime.isDead);
+        Assert.AreSame(slime.deadState, slime.stateMachine.currentState);
+    }
+
+    [Test]
+    public void TakeDamage_AfterDeath_DoesNothing()
+    {
+        Enemy_Slime slime = CreateStartedSlime();
+        slime.TakeDamage(3f);
+
+        slime.TakeDamage(1f);
+
+        Assert.AreEqual(0f, slime.currentHealth);
+        Assert.AreSame(slime.deadState, slime.stateMachine.currentState);
+    }
+
+    [Test]
+    public void DeadState_DisablesCollider()
+    {
+        Enemy_Slime slime = CreateStartedSlime();
+
+        slime.TakeDamage(3f);
+
+        CapsuleCollider2D col = root.GetComponent<CapsuleCollider2D>();
+        Assert.IsNotNull(col);
+        Assert.IsFalse(col.enabled);
+    }
+
+    [Test]
+    public void DeadState_LocksStateMachine()
+    {
+        Enemy_Slime slime = CreateStartedSlime();
+        slime.TakeDamage(3f);
+
+        bool changed = slime.stateMachine.ChangeState(slime.idleState);
+
+        Assert.IsFalse(changed);
+        Assert.AreSame(slime.deadState, slime.stateMachine.currentState);
+    }
+
+    [Test]
+    public void TakeDamage_BeforeInitialize_DoesNotStayDead()
+    {
+        Enemy_Slime slime = CreateSlime();
+        InvokeLifecycle(slime, "Awake");
+
+        slime.TakeDamage(3f);
+
+        Assert.AreEqual(0f, slime.currentHealth);
+        Assert.IsFalse(slime.isDead, "状态机尚未初始化时切不进死亡状态，不应留下 isDead 标记");
+    }
+
+    [Test]
+    public void TakeDamage_WithoutDeadState_LogsErrorAndDoesNotDie()
+    {
+        Enemy_Slime slime = CreateStartedSlime();
+        slime.deadState = null;
+
+        LogAssert.Expect(LogType.Error, new Regex("敌人未配置死亡状态"));
+        slime.TakeDamage(3f);
+
+        Assert.IsFalse(slime.isDead);
     }
 }

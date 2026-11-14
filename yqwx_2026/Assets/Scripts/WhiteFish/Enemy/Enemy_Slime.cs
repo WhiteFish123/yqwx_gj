@@ -6,6 +6,7 @@ public class Enemy_Slime : Enemy
         base.Awake();
 
         idleState = new Enemy_IdleState(this, stateMachine, "Idle");
+        deadState = new Enemy_DeadState(this, stateMachine, "Slime_Dead", 2f);
     }
 
     protected override void Start()//进入初始状态
