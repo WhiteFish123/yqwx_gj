@@ -160,14 +160,27 @@ public class UI_Inventory : MonoBehaviour
             return;
 
         pendingIndex = index;
-        selectedIndex = index;//记下来，之后按丢弃/收回键时用
-        UpdateButtonLabel(index);//武器显示"装备"，其他显示"使用"
+        selectedIndex = index;//记下来，之后按丢弃键时用
 
-        PlaceAtPointer(useButton, screenPosition, 12f);
-        SetGroup(useButtonGroup, true);
-        ForceUpdateText(useButton.gameObject);//显示后重建网格
+        SlotAction action = ActionFor(inventory != null ? inventory.GetItem(index) : null);
 
-        PlaceDropButton();//"丢弃"紧贴在它下面
+        if (action == SlotAction.None)
+        {
+            //像"油"这种既不能装备、也不是消耗品的物品：只给一个"丢弃"
+            SetGroup(useButtonGroup, false);
+            PlaceAtPointer(dropButton, screenPosition, 12f);
+        }
+        else
+        {
+            UpdateButtonLabel(index);//装备 / 使用
+
+            PlaceAtPointer(useButton, screenPosition, 12f);
+            SetGroup(useButtonGroup, true);
+            ForceUpdateText(useButton.gameObject);//显示后重建网格
+
+            PlaceDropButton();//"丢弃"紧贴在它下面
+        }
+
         SetGroup(dropButtonGroup, true);
     }
 
@@ -178,7 +191,7 @@ public class UI_Inventory : MonoBehaviour
         SetGroup(dropButtonGroup, false);//"丢弃"跟着一起藏
     }
 
-    public void UsePendingItem()//按钮点击时执行：武器就装备到手上，其他物品就使用掉
+    public void UsePendingItem()//按钮点击时执行
     {
         int index = pendingIndex;
 
@@ -192,18 +205,39 @@ public class UI_Inventory : MonoBehaviour
         if (item == null)
             return;
 
-        if (IsWeapon(item))
-            EquipFromBag(index);
-        else
-            inventory.UseItem(index);
+        switch (ActionFor(item))
+        {
+            case SlotAction.Equip:
+                EquipFromBag(index);
+                break;
+
+            case SlotAction.Use:
+                inventory.UseItem(index);
+                break;
+
+            //SlotAction.None：按钮根本不会出现，这里什么都不做
+            //（防止"油"这种物品被当成消耗品吃掉）
+        }
     }
 
     // ===== 背包 ↔ 手持栏 ↔ 地上 =====
 
-    //有 heldPrefab 的才算"能拿在手上的东西"（武器/工具）。药草、钥匙这类没有
-    private static bool IsWeapon(InventoryItem item)
+    //点开一个格子之后能做什么
+    private enum SlotAction
     {
-        return item != null && item.data != null && item.data.heldPrefab != null;
+        None,   //既不能装备也不是消耗品（油、钥匙……）：只能丢弃
+        Equip,  //有 heldPrefab → 装到手上
+        Use     //isConsumable → 用掉一个
+    }
+
+    private static SlotAction ActionFor(InventoryItem item)
+    {
+        if (item == null || item.data == null) return SlotAction.None;
+
+        if (item.data.heldPrefab != null) return SlotAction.Equip;
+        if (item.data.isConsumable) return SlotAction.Use;
+
+        return SlotAction.None;
     }
 
     //按钮文字跟着物品类型变：装备 / 使用
@@ -217,7 +251,7 @@ public class UI_Inventory : MonoBehaviour
             return;
 
         InventoryItem item = inventory != null ? inventory.GetItem(index) : null;
-        label.text = IsWeapon(item) ? "装备" : "使用";
+        label.text = ActionFor(item) == SlotAction.Equip ? "装备" : "使用";
     }
 
     //运行时克隆"装备/使用"按钮，得到一个外观、字体完全一致的"丢弃"按钮

@@ -126,6 +126,44 @@ public class Inventory : MonoBehaviour
         return false;
     }
 
+    //背包里有没有这种物品（车里要判断"带没带油"）
+    public bool HasItem(ItemData data)
+    {
+        if (data == null)
+            return false;
+
+        for (int i = 0; i < SlotCount; i++)
+        {
+            if (slots[i] != null && slots[i].data == data)
+                return true;
+        }
+
+        return false;
+    }
+
+    //拿走一个：消耗品数量 -1，非消耗品整格拿走。
+    //★ 这是"消耗掉"的意思，不会退回任何地方（车加油、用掉钥匙都用它）
+    public bool ConsumeItem(ItemData data)
+    {
+        if (data == null)
+            return false;
+
+        for (int i = 0; i < SlotCount; i++)
+        {
+            InventoryItem item = slots[i];
+            if (item == null || item.data != data)
+                continue;
+
+            if (item.RemoveStack())//堆叠耗尽就清空格子
+                slots[i] = null;
+
+            OnChanged?.Invoke();
+            return true;
+        }
+
+        return false;
+    }
+
     private void GiveStartingItems()//开局发放测试道具
     {
         for (int i = 0; i < startingItems.Count; i++)
