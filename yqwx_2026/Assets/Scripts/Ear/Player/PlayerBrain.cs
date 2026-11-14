@@ -12,6 +12,9 @@ public class PlayerBrain : MonoBehaviour
     [Header("输入")]
     public KeyCode grabKey = KeyCode.F;//按住抓箱子
 
+    //由外部（传送、过场等）临时关掉；关掉期间所有输入都当作没有
+    public bool inputEnabled = true;
+
     public Animator anim { get; private set; }//动画（可以为空：没有 Animator 时只走逻辑）
     public PlayerGridMove motor { get; private set; }//格子移动引擎
     public HeldItemSlot hand { get; private set; }//手持栏
@@ -63,6 +66,15 @@ public class PlayerBrain : MonoBehaviour
 
     private void ReadInput()
     {
+        //被外部锁住（例如传送淡出中）：一律当作没有任何输入
+        if (!inputEnabled)
+        {
+            moveInput = Vector2Int.zero;
+            attackPressed = false;
+            grabHeld = false;
+            return;
+        }
+
         moveInput = ReadMoveInput();
 
         //只有"手上有能用的武器"时，按 J 才算攻击输入 —— 空手不会进攻击状态
