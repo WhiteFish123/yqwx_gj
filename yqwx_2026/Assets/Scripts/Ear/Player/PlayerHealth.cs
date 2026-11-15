@@ -14,7 +14,7 @@ using UnityEngine.SceneManagement;
 // 为什么伤害走 Hurt(int) 而不是只走 TakeHit：
 //   TakeHit 是给"刀枪子弹"这类有 HitInfo 的东西用的（要区分伤害类型）；
 //   敌人的碰撞、火焰、Boss 这种只需要点数，直接调 Hurt 更直白。
-public class PlayerHealth : MonoBehaviour, IDamageable
+public class PlayerHealth : MonoBehaviour, IDamageable, IEnemyAttackTarget
 {
     [Header("血量")]
     public int maxHealth = 3;
@@ -96,6 +96,14 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         }
 
         StartCoroutine(HurtRoutine());
+    }
+
+    // ===== 给敌人用 =====
+    //敌人程序集看不见 PlayerHealth 这个类（asmdef 边界），只能面向 IEnemyAttackTarget 接口，
+    //这里实现它，敌人撞到时就调这个方法。
+    public void TakeEnemyHit(int damage)
+    {
+        Hurt(damage);
     }
 
     //扣血加血（以后可能有回血道具）

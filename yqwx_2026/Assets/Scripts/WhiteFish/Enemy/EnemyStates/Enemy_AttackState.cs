@@ -215,8 +215,8 @@ public class Enemy_AttackState : EnemyState
         if (enemy.WorldToCell(player.transform.position) != cell)
             return;
 
-        PlayerHealth health = player.GetComponent<PlayerHealth>();
-        if (health != null)
-            health.Hurt(1);
+        IEnemyAttackTarget target = player.GetComponent<IEnemyAttackTarget>();
+        if (target != null)
+            target.TakeEnemyHit(1);
     }
 }
