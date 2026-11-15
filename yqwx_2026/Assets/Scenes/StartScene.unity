@@ -1081,7 +1081,7 @@ GameObject:
   - component: {fileID: 1323021056}
   - component: {fileID: 1323021055}
   m_Layer: 0
-  m_Name: Image
+  m_Name: Car
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1203,7 +1203,7 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: -8732214993204338386, guid: eba09d28cceed1843a3e43ba12fd438b, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1

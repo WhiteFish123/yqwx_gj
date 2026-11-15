@@ -40,6 +40,10 @@ public class PlayerHealth : MonoBehaviour, IDamageable, IEnemyAttackTarget
     [Tooltip("死亡淡出时长")]
     public float deathFadeTime = 0.6f;
 
+    [Header("调试")]
+    [Tooltip("按这个键自己扣 1 点血，用来测闪红/无敌/死亡。默认 None = 关闭")]
+    public KeyCode debugHurtKey = KeyCode.None;
+
     public bool IsDead { get; private set; }
     public bool IsInvincible => invincibleTimer > 0f;
 
@@ -66,6 +70,10 @@ public class PlayerHealth : MonoBehaviour, IDamageable, IEnemyAttackTarget
     {
         if (invincibleTimer > 0f)
             invincibleTimer -= Time.deltaTime;
+
+        //调试键：不用等敌人，自己扣血就能测
+        if (debugHurtKey != KeyCode.None && Input.GetKeyDown(debugHurtKey))
+            Hurt(1);
     }
 
     // ===== IDamageable：刀枪子弹这类带类型的伤害 =====

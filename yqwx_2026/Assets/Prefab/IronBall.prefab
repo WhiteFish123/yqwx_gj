@@ -47,7 +47,8 @@ MonoBehaviour:
   cooldown: 0.5
   recovery: 0.15
   maxUses: 2
-  projectilePrefab: {fileID: 7333333333333333301, guid: e5f60718293a4b5c6d7e8f90a1b2c3d4, type: 3}
+  noiseRadius: 0
+  projectilePrefab: {fileID: 6559227980366878350, guid: 5bbefde28f4fd214ca142f66581e4e01, type: 3}
   damage: 8
   speed: 9
   spawnOffset: 0.7
