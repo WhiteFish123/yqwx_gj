@@ -3,16 +3,16 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// 玩家血量：3 滴血、受伤闪红、1 秒无敌、Boss 一击必杀。
+// 玩家血量：3 滴血、受伤闪红、1 秒无敌。
 //
 // 谁会打我：
-//   - 史莱姆 / 石像的冲刺撞到（Enemy_AttackState、Enemy_StoneChargeState 里调 Hurt）
+//   - 史莱姆 / 石像的冲刺撞到（Enemy_AttackState、Enemy_StoneChargeState 里调 Hurt(1)）
 //   - 燃烧的箱子（BurningChestHazard 每帧检查）
-//   - Boss（以后让它发一个 HitType.boss 的伤害，这里直接清空血量）
+//   - Boss（直接调 Hurt(3) —— 打满 3 点就死，不需要额外的伤害类型）
 //
 // 为什么伤害走 Hurt(int) 而不是只走 TakeHit：
 //   TakeHit 是给"刀枪子弹"这类有 HitInfo 的东西用的（要区分伤害类型）；
-//   敌人的碰撞、火焰这种"环境伤害"只有点数没有类型，直接调 Hurt 更直白。
+//   敌人的碰撞、火焰、Boss 这种只需要点数，直接调 Hurt 更直白。
 public class PlayerHealth : MonoBehaviour, IDamageable
 {
     [Header("血量")]
@@ -73,21 +73,17 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     {
         if (IsDead) return;
 
-        //Boss 一击必杀：直接把剩下的血全扣掉
-        if (info.type == HitType.boss)
-        {
-            Hurt(currentHealth);
-            return;
-        }
-
         Hurt(Mathf.Max(1, Mathf.RoundToInt(info.damage)));
     }
 
-    // ===== 通用入口：敌人碰撞、火焰等环境伤害 =====
+    // ===== 通用入口：敌人碰撞、火焰、Boss 都走这里 =====
 
-    public void Hurt(int damage)
+    //ignoreInvincible：无视无敌帧。Boss 这种"只要打到就该秒"的伤害要传 true，
+    //否则玩家刚好在上一击的无敌时间里，Boss 的三点伤害会被吃掉。
+    public void Hurt(int damage, bool ignoreInvincible = false)
     {
-        if (IsDead || IsInvincible || damage <= 0) return;
+        if (IsDead || damage <= 0) return;
+        if (IsInvincible && !ignoreInvincible) return;
 
         currentHealth = Mathf.Max(0, currentHealth - damage);
         HealthChanged?.Invoke(currentHealth, maxHealth);

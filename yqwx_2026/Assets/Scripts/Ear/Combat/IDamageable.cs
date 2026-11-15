@@ -13,11 +13,7 @@ public enum HitType
 {
     knife,      // 刀：近战
     gun,        // 枪：远程射线
-    ironBall,   // 铁球：远程投掷物
-    slime,      // 史莱姆：冲刺撞击
-    stone,      // 石像：蓄力冲撞
-    fire,       // 火焰：燃烧的箱子
-    boss        // Boss：一击必杀（玩家侧会直接清空血量）
+    ironBall    // 铁球：远程投掷物
 }
 
 // 能被攻击的接口
