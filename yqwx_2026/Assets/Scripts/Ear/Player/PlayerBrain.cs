@@ -62,6 +62,53 @@ public class PlayerBrain : MonoBehaviour
     {
         ReadInput();
         stateMachine.UpdateActiveState();
+        UpdateAnimatorParameters();
+    }
+
+    private float movingGrace;//跨格之间的短暂空档，避免"走/停"在两帧之间来回抖
+
+    //把状态同步给 Animator：朝向 Dir，以及推拉时补上 Move/Idle 并按移动速度缩放速率
+    //没有 Animator（或还没指定 controller）时自动跳过，不会报错
+    private void UpdateAnimatorParameters()
+    {
+        if (anim == null || anim.runtimeAnimatorController == null) return;
+
+        bool grabbing = motor != null && motor.IsGrabbing;
+
+        //① 推拉时手动驱动"走/停"：
+        //   Interact 状态只设 Interact 这个 bool，不会设 Move/Idle，
+        //   所以推着箱子走的时候要在这里补 —— 否则人物会一直停在待机图上。
+        if (grabbing)
+        {
+            //一整格刚走完时会有一帧是"没在跨格"，给 0.08 秒宽限，避免动画闪回待机
+            if (motor.IsMoving) movingGrace = 0.08f;
+            else movingGrace -= Time.deltaTime;
+
+            bool moving = motor.IsMoving || movingGrace > 0f;
+
+            anim.SetBool("Move", moving);
+            anim.SetBool("Idle", !moving);
+
+            //推拉比走路慢，动画速率按比例降低（0.5 = 慢一倍）
+            anim.speed = motor.PushPullSpeedScale;
+        }
+        else
+        {
+            movingGrace = 0f;
+            anim.speed = 1f;
+        }
+
+        //② 朝向 = 实际移动方向（motor.Facing）。
+        //   推拉时箱子恒在 Facing 那一格，所以这条规则天然满足"永远面对箱子"：
+        //   往前推是面朝箱子走，往后拉是面朝箱子退。
+        Vector2Int facing = motor != null ? motor.Facing : Vector2Int.down;
+
+        int dir = 0;
+        if (facing == Vector2Int.up) dir = 1;
+        else if (facing == Vector2Int.left) dir = 2;
+        else if (facing == Vector2Int.right) dir = 3;
+
+        anim.SetInteger("Dir", dir);
     }
 
     private void ReadInput()
@@ -83,25 +130,45 @@ public class PlayerBrain : MonoBehaviour
         grabHeld = Input.GetKey(grabKey);
     }
 
-    private static Vector2Int ReadMoveInput()//一次读一个方向（优先级：上 下 左 右）
+    private static Vector2Int lastPressedDir = Vector2Int.zero;//最后按下的方向
+
+    private static Vector2Int ReadMoveInput()
     {
-        //★ 用 GetKey（按住持续为真）而不是 GetKeyDown。
+        //★ 读方向用的是 GetKey（按住持续为真），不是 GetKeyDown。
         //  原因：GetKeyDown 只在按下那一帧为真，而那一帧的输入会被"Idle→Move"的状态切换吃掉，
         //  MoveState 下一帧再读就已经是 0 了 —— 表现就是"按了方向键但人不动"。
-        //  用 GetKey 之后：按住 = 连续走格；轻点一下 = 也至少走一格。
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
-            return Vector2Int.up;
 
-        if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
-            return Vector2Int.down;
+        //① 记录"最后按下"的方向：同时按住两个键时，转向后按的那一个（玩家直觉）
+        if (PressDown(KeyCode.W, KeyCode.UpArrow)) lastPressedDir = Vector2Int.up;
+        else if (PressDown(KeyCode.S, KeyCode.DownArrow)) lastPressedDir = Vector2Int.down;
+        else if (PressDown(KeyCode.A, KeyCode.LeftArrow)) lastPressedDir = Vector2Int.left;
+        else if (PressDown(KeyCode.D, KeyCode.RightArrow)) lastPressedDir = Vector2Int.right;
 
-        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
-            return Vector2Int.left;
+        //② 最后按下的还按着，就用它
+        if (IsHeld(lastPressedDir))
+            return lastPressedDir;
 
-        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
-            return Vector2Int.right;
+        //③ 松开了，退回"还按着的任意一个方向"（兜底顺序：上 下 左 右）
+        if (IsHeld(Vector2Int.up)) return Vector2Int.up;
+        if (IsHeld(Vector2Int.down)) return Vector2Int.down;
+        if (IsHeld(Vector2Int.left)) return Vector2Int.left;
+        if (IsHeld(Vector2Int.right)) return Vector2Int.right;
 
         return Vector2Int.zero;
+    }
+
+    private static bool PressDown(KeyCode a, KeyCode b)
+    {
+        return Input.GetKeyDown(a) || Input.GetKeyDown(b);
+    }
+
+    private static bool IsHeld(Vector2Int dir)
+    {
+        if (dir == Vector2Int.up) return Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow);
+        if (dir == Vector2Int.down) return Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow);
+        if (dir == Vector2Int.left) return Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow);
+        if (dir == Vector2Int.right) return Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow);
+        return false;
     }
 
     // ===== 状态切换的公共入口 =====
