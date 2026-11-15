@@ -5,11 +5,13 @@ using UnityEngine.UI;
 // 右下角的"手上道具"提示框。
 //
 // 显示内容：
-//   - 地上那件道具的图案（直接取 worldPrefab 上的 SpriteRenderer 的 sprite 和颜色）
+//   - 地上那件道具的图案（直接取 worldPrefab 上 SpriteRenderer 的 sprite 和颜色）
 //   - 名字；有使用次数的带上 n/m，例如 枪（4/6）、药（1/1）；无限次的只显示名字（刀、油）
 //   - 旁边的 "J" 由你摆一个静态文字进去，用来提示"按 J 使用"
 //
-// 空手时整个框会隐藏（如果填了 Box Root）。
+// ★ 空手时用 CanvasGroup.alpha = 0 隐藏，而不是 SetActive(false)。
+//   原因：这个脚本常常就挂在"要被隐藏的那个框"上，
+//   一旦 SetActive(false) 把自己也关掉，Update 就停了，永远没机会再显示出来。
 public class HeldItemHUD : MonoBehaviour
 {
     [Header("引用")]
@@ -22,11 +24,23 @@ public class HeldItemHUD : MonoBehaviour
     [Tooltip("名字文字，例如 枪（4/6）")]
     public TMP_Text nameLabel;
 
-    [Tooltip("整个框的根物体：空手时整体隐藏。留空则只清空内容，不隐藏")]
+    [Tooltip("要显示/隐藏的那个框。可以填脚本所在的物体自身；留空则始终显示，只清空内容")]
     public GameObject boxRoot;
 
     private InventoryItem lastItem;
     private int lastUses = int.MinValue;
+    private CanvasGroup boxGroup;
+
+    private void Awake()
+    {
+        //给 boxRoot 加（或取）一个 CanvasGroup，用它来控制显隐
+        if (boxRoot != null)
+        {
+            boxGroup = boxRoot.GetComponent<CanvasGroup>();
+            if (boxGroup == null)
+                boxGroup = boxRoot.AddComponent<CanvasGroup>();
+        }
+    }
 
     private void Update()
     {
@@ -54,13 +68,11 @@ public class HeldItemHUD : MonoBehaviour
     {
         bool has = item != null && item.data != null;
 
-        if (boxRoot != null)
-            boxRoot.SetActive(has);
+        SetVisible(has);
 
         if (!has)
         {
             if (nameLabel != null) nameLabel.text = "";
-            if (icon != null) icon.enabled = false;
             return;
         }
 
@@ -91,6 +103,22 @@ public class HeldItemHUD : MonoBehaviour
 
         if (nameLabel != null)
             nameLabel.text = Format(item);
+    }
+
+    //显隐：有 CanvasGroup 就调透明度（物体保持激活，脚本能继续跑）
+    private void SetVisible(bool visible)
+    {
+        if (boxGroup != null)
+        {
+            boxGroup.alpha = visible ? 1f : 0f;
+            boxGroup.blocksRaycasts = visible;
+            boxGroup.interactable = visible;
+            return;
+        }
+
+        //退路：没有 boxRoot 就不隐藏（只清空内容）
+        if (boxRoot != null && boxRoot != gameObject)
+            boxRoot.SetActive(visible);
     }
 
     //有使用次数的显示"名字（剩/总）"，无限的只显示名字
