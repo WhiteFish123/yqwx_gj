@@ -107,6 +107,18 @@ public class AudioManager : MonoBehaviour
         currentMusicId = null;
     }
 
+    public void PauseMusic()//暂停背景音乐（保留进度，ResumeMusic 能接着播）
+    {
+        if (musicSource != null)
+            musicSource.Pause();
+    }
+
+    public void ResumeMusic()//继续播放被暂停的背景音乐
+    {
+        if (musicSource != null)
+            musicSource.UnPause();
+    }
+
     public void PlaySfx(string id, float volumeScale = 1f)//播放音效
     {
         if (string.IsNullOrEmpty(id))
