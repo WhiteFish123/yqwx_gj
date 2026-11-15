@@ -37,6 +37,10 @@ public class Knife : WeaponBase
         int count = 0;
         foreach (Collider2D hit in hits)
         {
+            //★ 别砍到自己：手里的刀是玩家的子物体，所以两者的 root 是同一个。
+            //  （玩家现在实现了 IDamageable，不跳过的话一刀会砍自己一滴血）
+            if (hit.transform.root == transform.root) continue;
+
             // 只有实现 IDamageable 的物体才算命中；墙、地板、地上的物品都会被跳过
             IDamageable target = hit.GetComponent<IDamageable>();
             if (target == null) continue;
