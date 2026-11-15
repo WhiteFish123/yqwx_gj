@@ -1980,7 +1980,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 523929906}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -6064,7 +6064,8 @@ MonoBehaviour:
   - {fileID: 523929907}
   - {fileID: 545867619}
   - {fileID: 2065592635}
-  heartSprite: {fileID: 0}
+  fullSprite: {fileID: 7988155942760076991, guid: 4bc79c172fda6f34ba1da50060cfe6c9, type: 3}
+  emptySprite: {fileID: -8565644479373015057, guid: 45aad8145ed37e3488011b0bbdb2aa02, type: 3}
   fullColor: {r: 1, g: 1, b: 1, a: 1}
   emptyColor: {r: 1, g: 1, b: 1, a: 0.25}
   popScale: 1.35
