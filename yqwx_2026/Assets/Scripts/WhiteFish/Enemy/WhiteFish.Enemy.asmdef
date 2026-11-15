@@ -2,7 +2,8 @@
     "name": "WhiteFish.Enemy",
     "rootNamespace": "",
     "references": [
-        "WhiteFish.StateMachine"
+        "WhiteFish.StateMachine",
+        "WhiteFish.Combat"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

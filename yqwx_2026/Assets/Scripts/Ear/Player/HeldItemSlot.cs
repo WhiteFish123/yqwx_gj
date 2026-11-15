@@ -9,6 +9,10 @@ public class HeldItemSlot : MonoBehaviour
     [Header("设置")]
     public KeyCode useKey = KeyCode.J;
 
+    [Header("打火机")]
+    [Tooltip("手上拿着打火机时，按这个键点燃正前方的木箱（不占用 J 的攻击流程）")]
+    public KeyCode igniteKey = KeyCode.Space;
+
     [Header("测试用（可留空）")]
     public ItemData startItem;   // 开局手上拿的测试物品
 
@@ -43,11 +47,14 @@ public class HeldItemSlot : MonoBehaviour
         // 武器次数用完会自毁；这里发现实例没了，就把物品也清掉（物品被消耗，不回背包）
         if (heldItem != null && holderInstance == null)
         {
-            Debug.Log(HeldItemName + " 已耗尽，手上空了");
+            Debug.Log(HeldItemName + " 已耗尽，手上空");
             heldItem = null;
             current = null;
         }
 
+        // 打火机：按空格点燃正前方的木箱（冷却由 WeaponBase 管）
+        if (current is Lighter && Input.GetKeyDown(igniteKey))
+            UseEquipped();
     }
 
     // ===== 由状态机（Player_AttackState）调用 =====

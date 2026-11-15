@@ -18,5 +18,7 @@ MonoBehaviour:
   maxStack: 10
   isConsumable: 0
   worldPrefab: {fileID: 0}
-  heldPrefab: {fileID: 0}
+  heldPrefab: {fileID: 7244354605438688722, guid: 7186e12099cf37f4d996d6b2b003457c, type: 3}
   maxUses: -1
+  useEffect: 0
+  effectAmount: 1

@@ -11,19 +11,19 @@ public class Lighter : WeaponBase
     [Tooltip("往前第几格点火：1 = 正前方一格")]
     public int reach = 1;
 
-    private Grid grid;
+    private PlayerGridMove motor;
 
     protected override void Awake()
     {
         base.Awake();
-        grid = FindFirstObjectByType<Grid>();
+        motor = FindFirstObjectByType<PlayerGridMove>();
     }
 
     protected override void DoUse(Vector2 origin, Vector2 facing)
     {
-        if (grid == null)
+        if (motor == null)
         {
-            Debug.LogWarning("打火机：场景里找不到 Grid，点不了火", this);
+            Debug.LogWarning("打火机：场景里找不到 PlayerGridMove，点不了火", this);
             return;
         }
 
@@ -32,7 +32,8 @@ public class Lighter : WeaponBase
         if (dir == Vector2Int.zero)
             dir = Vector2Int.down;
 
-        Vector3Int originCell = grid.WorldToCell(origin);
+        //用玩家自己的格子坐标：一个场景里有多个 Grid，自己算 WorldToCell 会选错房间
+        Vector3Int originCell = motor.Cell;
         Vector2Int target = new Vector2Int(originCell.x + dir.x * reach, originCell.y + dir.y * reach);
 
         Chest chest = Chest.At(target);

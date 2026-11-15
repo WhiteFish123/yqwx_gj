@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 //敌人基类
-public class Enemy : MonoBehaviour
+public class Enemy : MonoBehaviour, IDamageable
 {
     public Animator anim { get; private set; }//动画组件（位于子对象上）
     public SpriteRenderer spriteRenderer { get; private set; }//精灵渲染器（位于子对象上）
@@ -104,6 +104,12 @@ public class Enemy : MonoBehaviour
             currentHealth = 0f;
             Die();
         }
+    }
+
+    //刀 / 枪 / 铁球都通过这个接口打过来，统一转成 TakeDamage
+    public virtual void TakeHit(HitInfo info)
+    {
+        TakeDamage(info.damage);
     }
 
     protected virtual void Die()//死亡处理，子类可覆写

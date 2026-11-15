@@ -210,7 +210,7 @@ GameObject:
   - component: {fileID: 2029621910879324024}
   - component: {fileID: 2076480145644136394}
   - component: {fileID: 1257655274485610398}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Chest_Wooden_2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -310,6 +310,10 @@ MonoBehaviour:
   bodyRenderer: {fileID: 490602105890168216}
   burnDuration: 5
   charredColor: {r: 0.25, g: 0.22, b: 0.2, a: 1}
+  secondFloorTilemap: {fileID: 0}
+  floorTilemap: {fileID: 0}
+  fallDuration: 0.2
+  maxFallCells: 50
 --- !u!114 &1257655274485610398
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,7 +1,10 @@
 {
     "name": "WhiteFish.Chest",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "WhiteFish.Combat",
+        "WhiteFish.Enemy"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: Item - Potion
   m_EditorClassIdentifier: 
   itemName: "\u8840\u836F"
-  description: "\u56DE\u590D 1 \u70B9\u8840\u3002\u53EF\u4EE5\u62FF\u5728\u624B\u4E0A\u6309 J\uFF0C\u4E5F\u53EF\u4EE5\u5728\u80CC\u5305\u91CC\u70B9\u4F7F\u7528\u3002"
-  icon: {fileID: 0}
+  description: "\u56DE\u590D 1 \u70B9\u8840\u3002\u53EF\u4EE5\u62FF\u5728\u624B\u4E0A\u6309
+    J\uFF0C\u4E5F\u53EF\u4EE5\u5728\u80CC\u5305\u91CC\u70B9\u4F7F\u7528\u3002"
+  icon: {fileID: -1622338585549776300, guid: 6019f14d886c89b47b834cef54b50f74, type: 3}
   maxStack: 1
   isConsumable: 1
   worldPrefab: {fileID: 5500000000000000001, guid: f011718293a4b5c6d7e8f90123456789, type: 3}

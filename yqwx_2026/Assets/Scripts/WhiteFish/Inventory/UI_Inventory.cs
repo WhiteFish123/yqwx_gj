@@ -213,9 +213,33 @@ public class UI_Inventory : MonoBehaviour
         SetGroup(dropButtonGroup, false);//"丢弃"跟着一起藏
     }
 
-    public void UsePendingItem()//按钮点击时执行
+    //双击格子的快捷使用：装备的走装备，消耗品用掉一个
+    public void ActivateSlot(int index)
     {
-        int index = pendingIndex;
+        if (inventory == null)
+            return;
+
+        InventoryItem item = inventory.GetItem(index);
+        if (item == null)
+            return;
+
+        HideUseButton();
+        HideTooltip();
+
+        switch (ActionFor(item))
+        {
+            case SlotAction.Equip:
+                EquipFromBag(index);
+                break;
+
+            case SlotAction.Use:
+                inventory.UseItem(index);
+                break;
+        }
+    }
+
+    public void UsePendingItem()//按钮点击时执行
+    {        int index = pendingIndex;
 
         HideUseButton();
         HideTooltip();

@@ -8,10 +8,12 @@ public class UI_ItemSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 {
     [SerializeField] private Image icon;//图标
     [SerializeField] private TextMeshProUGUI stackText;//数量文本
+    [SerializeField] private float doubleClickWindow = 0.3f;//双击判定窗口（秒）
 
     private Inventory inventory;//数据来源
     private UI_Inventory ui;//所属界面
     private int index;//格子下标
+    private float lastClickTime = -10f;//上一次点击时间（不受 timeScale 影响）
 
     private void Awake()
     {
@@ -69,8 +71,20 @@ public class UI_ItemSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
             return;
 
         if (CurrentItem() == null)
+        {
             ui.HideUseButton();
-        else
-            ui.ShowUseButton(index, this);
+            return;
+        }
+
+        //快速双击：直接用掉 / 装备（背包打开时 timeScale=0，只能用 unscaledTime）
+        if (Time.unscaledTime - lastClickTime <= doubleClickWindow)
+        {
+            lastClickTime = -10f;
+            ui.ActivateSlot(index);
+            return;
+        }
+
+        lastClickTime = Time.unscaledTime;
+        ui.ShowUseButton(index, this);
     }
 }
