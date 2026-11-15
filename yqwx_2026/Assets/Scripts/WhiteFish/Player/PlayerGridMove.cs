@@ -12,6 +12,7 @@ public class PlayerGridMove : MonoBehaviour
 {
     [SerializeField] private Grid grid;//所在网格，留空则自动查找
     [SerializeField] private float moveDuration = 0.15f;//每格移动用时
+    [SerializeField] private float pushPullDuration = 0.3f;//推拉箱子一格用时（比走路慢，动画速率会按比例降低）
     [SerializeField] private LayerMask blockingMask;//阻挡层（格子内有这些层的碰撞体时不能走进去）
 
     private Vector3Int cell;//当前所在格
@@ -22,6 +23,11 @@ public class PlayerGridMove : MonoBehaviour
     public Vector3Int Cell => cell;//当前所在格
     public bool IsMoving => isMoving;//是否正在跨格
     public bool IsGrabbing => grabbedChest != null;//是否抓着箱子
+
+    //推拉时相对走路的移动速度比例（1 = 一样快，0.5 = 慢一半）。
+    //给动画用：推拉比走路慢，动画播放速率跟着按比例降低。
+    public float PushPullSpeedScale =>
+        pushPullDuration > 0.001f ? Mathf.Clamp01(moveDuration / pushPullDuration) : 1f;
 
     private void Start()
     {
@@ -185,13 +191,13 @@ public class PlayerGridMove : MonoBehaviour
         Vector3 playerStart = transform.position;
         Vector3 playerEnd = grid.GetCellCenterWorld(targetCell);
 
-        chest.MoveTo(chestTarget, moveDuration);
+        chest.MoveTo(chestTarget, pushPullDuration);
 
         float elapsed = 0f;
-        while (elapsed < moveDuration)
+        while (elapsed < pushPullDuration)
         {
             elapsed += Time.deltaTime;
-            transform.position = Vector3.Lerp(playerStart, playerEnd, elapsed / moveDuration);
+            transform.position = Vector3.Lerp(playerStart, playerEnd, elapsed / pushPullDuration);
             yield return null;
         }
 
