@@ -3,7 +3,8 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// 玩家血量：3 滴血、受伤闪红、1 秒无敌。
+// 玩家血量：血量可在 Inspector 里设（默认 3 滴），归零死亡并进入死亡界面。
+// 受伤闪红、1 秒无敌。
 //
 // 谁会打我：
 //   - 史莱姆 / 石像的冲刺撞到（Enemy_AttackState、Enemy_StoneChargeState 里调 Hurt(1)）
@@ -33,8 +34,8 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     public float blinkInterval = 0.08f;
 
     [Header("死亡")]
-    [Tooltip("死亡后是否重开当前场景")]
-    public bool reloadSceneOnDeath = true;
+    [Tooltip("死亡后进入哪个场景。留空 = 重开当前场景（当作直接重试）")]
+    public string deathSceneName = "DeathScene";
 
     [Tooltip("死亡淡出时长")]
     public float deathFadeTime = 0.6f;
@@ -165,10 +166,22 @@ public class PlayerHealth : MonoBehaviour, IDamageable
 
         Debug.Log("玩家死亡");
 
-        if (!reloadSceneOnDeath) return;
+        //死亡后进哪个场景：默认死亡界面，留空则当作重开本关
+        string target = string.IsNullOrEmpty(deathSceneName)
+            ? SceneManager.GetActiveScene().name
+            : deathSceneName;
 
-        //用常驻的 ScreenFader 淡出并重开当前场景（它不会被切场景销毁，所以淡入能接上）
+        //目标场景没登记进 Build Settings 时退回到"重开本关"，免得卡在黑屏
+        if (!Application.CanStreamedLevelBeLoaded(target))
+        {
+            Debug.LogError("PlayerHealth：场景 \"" + target + "\" 不在 Build Settings 的 Scene List 里，" +
+                           "改为重开当前场景。要进死亡界面请先把它加进 Scene List。", this);
+
+            target = SceneManager.GetActiveScene().name;
+        }
+
+        //用常驻的 ScreenFader 淡出并切场景（它不会被切场景销毁，所以淡入能接上）
         ScreenFader.Instance.StartCoroutine(
-            ScreenFader.Instance.FadeOutAndLoad(SceneManager.GetActiveScene().name, deathFadeTime));
+            ScreenFader.Instance.FadeOutAndLoad(target, deathFadeTime));
     }
 }

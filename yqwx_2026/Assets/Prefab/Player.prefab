@@ -333,7 +333,7 @@ MonoBehaviour:
   hurtColor: {r: 1, g: 0.25, b: 0.25, a: 1}
   flashTime: 0.12
   blinkInterval: 0.08
-  reloadSceneOnDeath: 1
+  deathSceneName: DeathScene
   deathFadeTime: 0.6
 --- !u!114 &7700000000000000004
 MonoBehaviour:
