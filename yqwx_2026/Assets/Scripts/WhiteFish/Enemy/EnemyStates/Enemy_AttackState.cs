@@ -156,6 +156,7 @@ public class Enemy_AttackState : EnemyState
 
         if (enemy.IsCellOccupied(next))//前方被障碍、玩家或别的敌人挡住
         {
+            HurtPlayerAt(next);//如果挡住的是玩家 → 撞到了
             RequestFinish();
             return;
         }
@@ -202,5 +203,20 @@ public class Enemy_AttackState : EnemyState
             return;
 
         enemy.trailEffect.SetActive(on);//激活时 Animator 会自动从头播放拖尾动画
+    }
+
+    //如果玩家站在这个格子上，说明冲刺撞到了他 → 扣一滴血
+    private void HurtPlayerAt(Vector3Int cell)
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null)
+            return;
+
+        if (enemy.WorldToCell(player.transform.position) != cell)
+            return;
+
+        IEnemyAttackTarget target = player.GetComponent<IEnemyAttackTarget>();
+        if (target != null)
+            target.TakeEnemyHit(1);
     }
 }
