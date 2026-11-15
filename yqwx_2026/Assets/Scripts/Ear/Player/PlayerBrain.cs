@@ -71,11 +71,11 @@ public class PlayerBrain : MonoBehaviour
     {
         if (anim == null || anim.runtimeAnimatorController == null) return;
 
-        //朝向优先用"当前按着的方向"：
-        //  跨格途中按了别的方向，人物立刻转身（视觉响应快），
-        //  但实际位移还是走完这一格 —— 网格游戏不能半路拐弯。
+        //★ 朝向 = 实际移动方向（motor.Facing），不是"当前按着的方向"。
+        //  这样"转身"和"迈步"是同一时刻发生的：
+        //  按键的瞬间人物还是旧朝向，等这一步走完、下一格朝新方向迈出去时才转身，
+        //  不会出现"人已经朝右、脚还在往上走"的错位。
         Vector2Int facing = motor != null ? motor.Facing : Vector2Int.down;
-        if (moveInput != Vector2Int.zero) facing = moveInput;
 
         int dir = 0;
         if (facing == Vector2Int.up) dir = 1;
