@@ -1,5 +1,12 @@
 using UnityEngine;
 
+// 从背包里点"使用"时触发什么效果。
+public enum ItemEffect
+{
+    None,   // 没效果（武器、油、钥匙……）
+    Heal    // 回血（数量见 ItemData.effectAmount）
+}
+
 //道具数据：在 Assets/Data/Items 下创建资产
 [CreateAssetMenu(menuName = "WhiteFish/Item Data", fileName = "Item - ")]
 public class ItemData : ScriptableObject
@@ -20,4 +27,11 @@ public class ItemData : ScriptableObject
 
     [Tooltip("可使用次数；-1 表示无限次（例如刀）。武器装备时读这个值，用完自毁")]
     public int maxUses = -1;//使用次数，-1 = 无限
+
+    [Header("使用效果（在背包里点\"使用\"时生效）")]
+    [Tooltip("拿在手上按 J 用的效果由 heldPrefab 上的脚本决定，不走这里")]
+    public ItemEffect useEffect = ItemEffect.None;
+
+    [Tooltip("效果数值：Heal 表示回几点血")]
+    public int effectAmount = 1;
 }

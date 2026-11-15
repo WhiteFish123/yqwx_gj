@@ -125,7 +125,13 @@ public class PlayerBrain : MonoBehaviour
         moveInput = ReadMoveInput();
 
         //只有"手上有能用的武器"时，按 J 才算攻击输入 —— 空手不会进攻击状态
-        attackPressed = hand != null && hand.CanUseHeldItem && Input.GetKeyDown(hand.useKey);
+        bool attackKeyDown = hand != null && Input.GetKeyDown(hand.useKey);
+
+        //手上有东西、但按 J 完全没效果（油、钥匙这类）：提示一句，别让玩家以为卡住了
+        if (attackKeyDown && hand != null && hand.HeldItem != null && !hand.CanUseHeldItem)
+            ScreenMessage.Show("把这东西拿在手上能干什么？");
+
+        attackPressed = attackKeyDown && hand != null && hand.CanUseHeldItem;
 
         grabHeld = Input.GetKey(grabKey);
     }

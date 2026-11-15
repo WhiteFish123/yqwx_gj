@@ -237,8 +237,11 @@ public class UI_Inventory : MonoBehaviour
     {
         if (item == null || item.data == null) return SlotAction.None;
 
-        if (item.data.heldPrefab != null) return SlotAction.Equip;
+        //消耗品优先走"使用"：血药这种既能拿在手上按 J 喝，也能在背包里点"使用"
         if (item.data.isConsumable) return SlotAction.Use;
+
+        //非消耗品里有 heldPrefab 的才是"能装到手上的东西"（枪、刀、铁球、打火机）
+        if (item.data.heldPrefab != null) return SlotAction.Equip;
 
         return SlotAction.None;
     }

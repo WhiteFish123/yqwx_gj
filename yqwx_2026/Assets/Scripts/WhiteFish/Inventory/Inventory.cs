@@ -68,10 +68,14 @@ public class Inventory : MonoBehaviour
         return true;
     }
 
-    public bool UseItem(int index)//使用某格道具：数量 -1，归零则清空
+    public bool UseItem(int index)//使用某格道具：先应用效果，生效了才扣数量
     {
         InventoryItem item = GetItem(index);
         if (item == null)
+            return false;
+
+        //先应用效果；没生效（例如满血喝血药）就什么都不消耗
+        if (!ItemUseEffects.Apply(item.data))
             return false;
 
         if (item.RemoveStack())
