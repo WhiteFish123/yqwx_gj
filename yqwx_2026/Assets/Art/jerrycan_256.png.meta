@@ -134,7 +134,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      jerrycan_256_0: 5728138329853217173
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
