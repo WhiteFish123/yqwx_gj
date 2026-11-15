@@ -129,8 +129,9 @@ public class Enemy_StoneChargeState : EnemyState
             return;
         }
 
-        if (IsPlayerAt(next))//撞到玩家：停下回待机，并短暂不再察觉，避免原地无限蓄力
+        if (IsPlayerAt(next))//撞到玩家：造成伤害，停下回待机，并短暂不再察觉，避免原地无限蓄力
         {
+            HurtPlayer();
             stone.SuppressDetect(stone.detectCooldownAfterBump);
             stateMachine.ChangeState(enemy.idleState);
             return;
@@ -190,6 +191,18 @@ public class Enemy_StoneChargeState : EnemyState
 
         frameLooping = true;
         return loopStart;
+    }
+
+    //撞到玩家：扣一滴血
+    private void HurtPlayer()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null)
+            return;
+
+        PlayerHealth health = player.GetComponent<PlayerHealth>();
+        if (health != null)
+            health.Hurt(1);
     }
 
     private bool IsPlayerAt(Vector3Int cell)//玩家是否站在该格

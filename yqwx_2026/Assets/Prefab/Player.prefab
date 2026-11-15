@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1 &5208354841333560807
 GameObject:
@@ -19,6 +19,8 @@ GameObject:
   - component: {fileID: 6198801603477462452}
   - component: {fileID: 7700000000000000001}
   - component: {fileID: 7700000000000000002}
+  - component: {fileID: 7700000000000000003}
+  - component: {fileID: 7700000000000000004}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -313,3 +315,39 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &7700000000000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5208354841333560807}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f00fb1c2d3e4f5a6b7c8d9e0f1a2b3c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 3
+  currentHealth: 3
+  invincibleTime: 1
+  hurtColor: {r: 1, g: 0.25, b: 0.25, a: 1}
+  flashTime: 0.12
+  blinkInterval: 0.08
+  reloadSceneOnDeath: 1
+  deathFadeTime: 0.6
+--- !u!114 &7700000000000000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5208354841333560807}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f00fc2d3e4f5a6b7c8d9e0f1a2b3c4d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  radius: 1
+  rescanInterval: 0.5
+  hurtInterval: 1
+  damagePerBurn: 1
