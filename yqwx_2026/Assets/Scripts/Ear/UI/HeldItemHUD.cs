@@ -27,9 +27,22 @@ public class HeldItemHUD : MonoBehaviour
     [Tooltip("要显示/隐藏的那个框。可以填脚本所在的物体自身；留空则始终显示，只清空内容")]
     public GameObject boxRoot;
 
+    [Header("图案尺寸")]
+    [Tooltip("打开后：按图片比例自动调整图案框大小，细长道具会占更多横向空间。关掉则固定框大小、只等比缩放图片")]
+    public bool fitIconToSprite = false;
+
+    [Tooltip("图案框的高度（像素）")]
+    public float iconHeight = 56f;
+
+    [Tooltip("最宽能到高度的几倍，超过就等比缩小，免得挤到名字文字")]
+    public float iconMaxWidthRatio = 1.5f;
+
     private InventoryItem lastItem;
     private int lastUses = int.MinValue;
     private CanvasGroup boxGroup;
+
+    private Vector2 iconCenter;        //图案框初始的视觉中心（相对父物体）
+    private bool iconCenterCached;
 
     private void Awake()
     {
@@ -40,6 +53,9 @@ public class HeldItemHUD : MonoBehaviour
             if (boxGroup == null)
                 boxGroup = boxRoot.AddComponent<CanvasGroup>();
         }
+
+        //记下图案框原本的中心，之后按比例改尺寸时用它把位置补偿回来
+        CacheIconCenter();
     }
 
     private void Update()
@@ -99,10 +115,65 @@ public class HeldItemHUD : MonoBehaviour
             icon.sprite = sprite;
             icon.color = color;
             icon.enabled = sprite != null;
+
+            //★ 关键：保持图片原始比例。
+            //  不勾的话，方形格子里的细长道具（刀、钥匙）会被拉伸压扁。
+            //  代码里强制设一次，免得忘了在 Inspector 勾。
+            icon.preserveAspect = true;
+
+            if (sprite != null && fitIconToSprite)
+                FitIcon(sprite);
         }
 
         if (nameLabel != null)
             nameLabel.text = Format(item);
+    }
+
+    //按图片比例调整图案框的大小：高度固定，宽度 = 高度 × 宽高比，
+    //太宽的图会等比缩小到 maxWidthRatio 倍以内，避免挤到名字文字。
+    //
+    //★ 改尺寸时必须补偿位置：
+    //  图案框的 Pivot 通常设在左边缘，宽度一变就是"从左边往右长"，
+    //  中心会跟着右移，看起来就偏离竖直轴心。这里把视觉中心钉回原位。
+    private void FitIcon(Sprite sprite)
+    {
+        float aspect = sprite.rect.width / Mathf.Max(1f, sprite.rect.height);
+
+        float height = iconHeight;
+        float width = height * aspect;
+
+        float maxWidth = height * iconMaxWidthRatio;
+        if (width > maxWidth)
+        {
+            width = maxWidth;
+            height = maxWidth / aspect;
+        }
+
+        RectTransform rect = icon.rectTransform;
+        rect.sizeDelta = new Vector2(width, height);
+
+        //视觉中心 = 锚点位置 + (0.5 - pivot) * 尺寸；把中心拉回初始位置
+        Vector2 pos = rect.anchoredPosition;
+        pos.x = iconCenter.x - (0.5f - rect.pivot.x) * width;
+        pos.y = iconCenter.y - (0.5f - rect.pivot.y) * height;
+        rect.anchoredPosition = pos;
+    }
+
+    //记下图案框初始的视觉中心（只在第一次用到时算一次）
+    private void CacheIconCenter()
+    {
+        if (icon == null || iconCenterCached)
+            return;
+
+        RectTransform rect = icon.rectTransform;
+
+        float width = rect.rect.width > 0f ? rect.rect.width : rect.sizeDelta.x;
+        float height = rect.rect.height > 0f ? rect.rect.height : rect.sizeDelta.y;
+
+        iconCenter.x = rect.anchoredPosition.x + (0.5f - rect.pivot.x) * width;
+        iconCenter.y = rect.anchoredPosition.y + (0.5f - rect.pivot.y) * height;
+
+        iconCenterCached = true;
     }
 
     //显隐：有 CanvasGroup 就调透明度（物体保持激活，脚本能继续跑）
