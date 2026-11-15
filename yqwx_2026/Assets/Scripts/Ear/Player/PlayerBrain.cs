@@ -62,19 +62,45 @@ public class PlayerBrain : MonoBehaviour
     {
         ReadInput();
         stateMachine.UpdateActiveState();
-        UpdateAnimatorDirection();
+        UpdateAnimatorParameters();
     }
 
-    //把朝向同步给 Animator 的整型参数 Dir（0=下 1=上 2=左 3=右）
+    private float movingGrace;//跨格之间的短暂空档，避免"走/停"在两帧之间来回抖
+
+    //把状态同步给 Animator：朝向 Dir，以及推拉时补上 Move/Idle 并按移动速度缩放速率
     //没有 Animator（或还没指定 controller）时自动跳过，不会报错
-    private void UpdateAnimatorDirection()
+    private void UpdateAnimatorParameters()
     {
         if (anim == null || anim.runtimeAnimatorController == null) return;
 
-        //★ 朝向 = 实际移动方向（motor.Facing），不是"当前按着的方向"。
-        //  这样"转身"和"迈步"是同一时刻发生的：
-        //  按键的瞬间人物还是旧朝向，等这一步走完、下一格朝新方向迈出去时才转身，
-        //  不会出现"人已经朝右、脚还在往上走"的错位。
+        bool grabbing = motor != null && motor.IsGrabbing;
+
+        //① 推拉时手动驱动"走/停"：
+        //   Interact 状态只设 Interact 这个 bool，不会设 Move/Idle，
+        //   所以推着箱子走的时候要在这里补 —— 否则人物会一直停在待机图上。
+        if (grabbing)
+        {
+            //一整格刚走完时会有一帧是"没在跨格"，给 0.08 秒宽限，避免动画闪回待机
+            if (motor.IsMoving) movingGrace = 0.08f;
+            else movingGrace -= Time.deltaTime;
+
+            bool moving = motor.IsMoving || movingGrace > 0f;
+
+            anim.SetBool("Move", moving);
+            anim.SetBool("Idle", !moving);
+
+            //推拉比走路慢，动画速率按比例降低（0.5 = 慢一倍）
+            anim.speed = motor.PushPullSpeedScale;
+        }
+        else
+        {
+            movingGrace = 0f;
+            anim.speed = 1f;
+        }
+
+        //② 朝向 = 实际移动方向（motor.Facing）。
+        //   推拉时箱子恒在 Facing 那一格，所以这条规则天然满足"永远面对箱子"：
+        //   往前推是面朝箱子走，往后拉是面朝箱子退。
         Vector2Int facing = motor != null ? motor.Facing : Vector2Int.down;
 
         int dir = 0;
