@@ -87,8 +87,27 @@ public class UI_Inventory : MonoBehaviour
         if (!panel.activeSelf)//下面这个键只在背包打开时生效
             return;
 
+        HideTooltipIfPointerOnIt();//鼠标压到浮窗上就收起，避免浮窗挡住操作
+
         if (Input.GetKeyDown(dropKey))
             DropSelected();
+    }
+
+    //鼠标进入浮窗覆盖的区域时收起浮窗。
+    //只靠格子的 PointerExit 不够：浮窗左移后会盖住格子的一部分，
+    //鼠标移到那部分上时仍然"在格子里"，浮窗就会一直显示。
+    private void HideTooltipIfPointerOnIt()
+    {
+        if (tooltip == null || tooltipGroup == null || tooltipGroup.alpha <= 0f)
+            return;
+
+        Camera camera = null;
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+            camera = canvas.worldCamera;
+
+        if (RectTransformUtility.RectangleContainsScreenPoint(tooltip, Input.mousePosition, camera))
+            HideTooltip();
     }
 
     public void SetPanelVisible(bool visible)
