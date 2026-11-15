@@ -187,6 +187,9 @@ public class PlayerGridMove : MonoBehaviour
     {
         isMoving = true;
 
+        bool wasOnSecondFloor = chest.IsSecondFloorCell(chest.Cell);//记下推动前箱子是否在二楼
+        bool willBeOnSecondFloor = chest.IsSecondFloorCell(chestTarget);
+
         Vector3Int targetCell = new Vector3Int(playerTarget.x, playerTarget.y, cell.z);
         Vector3 playerStart = transform.position;
         Vector3 playerEnd = grid.GetCellCenterWorld(targetCell);
@@ -204,5 +207,17 @@ public class PlayerGridMove : MonoBehaviour
         transform.position = playerEnd;
         cell = targetCell;
         isMoving = false;
+
+        if (!wasOnSecondFloor || willBeOnSecondFloor)//没从二楼推出去，正常结束
+            yield break;
+
+        while (chest.IsMoving)//等箱子横向到位
+            yield return null;
+
+        ReleaseGrab();//箱子被推出边缘，玩家松手
+
+        Vector2Int landing = chest.FindLandingCell();
+        if (landing != chest.Cell)
+            chest.FallTo(landing);
     }
 }
