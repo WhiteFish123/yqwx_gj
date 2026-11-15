@@ -19,6 +19,9 @@ public class Enemy_Stone : Enemy
 
     public Enemy_StoneChargeState chargeState;//蓄力 + 冲撞
     public Enemy_StoneStunnedState stunnedState;//撞墙晕眩
+    public Enemy_StoneReturnState stoneReturnState;//走回原位
+
+    public Vector3Int homeCell { get; private set; }//出生格子，冲刺后回到这里
 
     private float nextDetectTime;//下次允许察觉的时间点
 
@@ -29,20 +32,30 @@ public class Enemy_Stone : Enemy
         idleState = new Enemy_IdleState(this, stateMachine, null, "Stone_Idle");
         moveState = new Enemy_MoveState(this, stateMachine, null, "Stone_Move");
         returnState = new Enemy_ReturnState(this, stateMachine, null, "Stone_Move");
-        investigateState = new Enemy_InvestigateState(this, stateMachine, null, "Stone_Move");
+        investigateState = new Enemy_StoneInvestigateState(this, stateMachine, null, "Stone_Move");
         chargeState = new Enemy_StoneChargeState(this, stateMachine);
         stunnedState = new Enemy_StoneStunnedState(this, stateMachine, "Stone_Stunned");
+        stoneReturnState = new Enemy_StoneReturnState(this, stateMachine, null, "Stone_Move");
         deadState = new Enemy_DeadState(this, stateMachine, "Stone_Dead");
 
         chaseState = null;//石像鬼不追逐
     }
 
-    protected override void Start()//构建巡逻路线并进入初始状态
+    protected override void Start()//记录原位并进入待机（石像鬼不巡逻，不构建巡逻路线）
     {
         base.Start();
 
-        BuildPatrolPath();
+        homeCell = WorldToCell(transform.position);//冲刺结束后回到这里
         stateMachine.Initialize(idleState);
+    }
+
+    //冲刺或晕眩结束后调用：已在原位就待机，否则走回去
+    public void GoHome()
+    {
+        if (WorldToCell(transform.position) == homeCell)
+            stateMachine.ChangeState(idleState);
+        else
+            stateMachine.ChangeState(stoneReturnState);
     }
 
     public override bool CanDetectPlayer()//正前方 1 格宽 × detectRange 格

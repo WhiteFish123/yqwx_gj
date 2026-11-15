@@ -30,7 +30,7 @@ public class Enemy_StoneStunnedState : EnemyState
     {
         base.Update();
 
-        if (stateTimer <= 0f)
-            stateMachine.ChangeState(enemy.idleState);
+        if (stateTimer <= 0f)//晕眩结束，走回原位
+            stone.GoHome();
     }
 }

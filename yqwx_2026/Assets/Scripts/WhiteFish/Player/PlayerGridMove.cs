@@ -32,10 +32,34 @@ public class PlayerGridMove : MonoBehaviour
     private void Start()
     {
         if (grid == null)
-            grid = FindFirstObjectByType<Grid>();
+            grid = FindNearestGrid();
 
         if (grid != null)
             cell = grid.WorldToCell(transform.position);
+    }
+
+    //一个场景里有多个 Grid（每个房间一个），取离玩家最近的那个，
+    //否则默认会拿到主房间的 Grid，算出来的格子坐标会差几十格。
+    private Grid FindNearestGrid()
+    {
+        Grid[] grids = FindObjectsByType<Grid>(FindObjectsSortMode.None);
+        if (grids.Length == 0)
+            return null;
+
+        Grid nearest = grids[0];
+        float best = float.MaxValue;
+
+        foreach (Grid candidate in grids)
+        {
+            float distance = (candidate.transform.position - transform.position).sqrMagnitude;
+            if (distance < best)
+            {
+                best = distance;
+                nearest = candidate;
+            }
+        }
+
+        return nearest;
     }
 
     // ===== 下面这些是给状态机调用的"能力" =====
@@ -47,8 +71,25 @@ public class PlayerGridMove : MonoBehaviour
             return false;
 
         Vector3Int target = new Vector3Int(cell.x + direction.x, cell.y + direction.y, cell.z);
-        if (!IsWalkable(target))
+
+        //朝传送砖迈步就传送（人不会被放到砖上，所以落点不会立刻反弹）
+        TeleportTiles.Kind kind;
+        TeleportTiles gate = TeleportTiles.AtWorld(grid.GetCellCenterWorld(target), out kind);
+        if (gate != null)
+        {
+            gate.Activate(this, kind);
             return false;
+        }
+
+        if (!IsWalkable(target))
+        {
+            //撞到的是传送门就走黑幕传送，不当成"走不动"
+            TeleportDoor door = TeleportDoor.At(new Vector2Int(target.x, target.y));
+            if (door != null)
+                door.Activate(this);
+
+            return false;
+        }
 
         StartCoroutine(MoveRoutine(target));
         return true;
@@ -59,6 +100,14 @@ public class PlayerGridMove : MonoBehaviour
     {
         if (direction != Vector2Int.zero)
             Facing = direction;
+    }
+
+    //切换所在网格：跨房间传送后必须换到目标房间的 Grid，
+    //否则 GetCellCenterWorld 会按旧 Grid 的偏移算出错误的世界坐标。
+    public void SetGrid(Grid newGrid)
+    {
+        if (newGrid != null)
+            grid = newGrid;
     }
 
     //瞬移：把玩家直接放到某一格的中心。
