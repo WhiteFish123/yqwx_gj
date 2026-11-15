@@ -333,6 +333,7 @@ MonoBehaviour:
   blinkInterval: 0.08
   deathSceneName: DeathScene
   deathFadeTime: 0.6
+  debugHurtKey: 107
 --- !u!114 &7700000000000000004
 MonoBehaviour:
   m_ObjectHideFlags: 0
