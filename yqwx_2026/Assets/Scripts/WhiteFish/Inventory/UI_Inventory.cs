@@ -24,6 +24,10 @@ public class UI_Inventory : MonoBehaviour
     [Header("字体")]
     [SerializeField] private TMP_FontAsset fontOverride;//留空则用全局默认
 
+    [Header("布局")]
+    [SerializeField] private float tooltipGap = 8f;//浮窗与格子之间的空隙（像素）
+    [SerializeField] private float buttonGap = 8f;//按钮与格子之间的空隙（像素）
+
     private Inventory inventory;//背包数据
     private Canvas canvas;//所在画布
     private readonly List<UI_ItemSlot> slots = new List<UI_ItemSlot>();//所有格子
@@ -120,7 +124,7 @@ public class UI_Inventory : MonoBehaviour
             slot.Refresh();
     }
 
-    public void ShowTooltip(UI_ItemSlot slot, Vector2 screenPosition)//显示浮窗
+    public void ShowTooltip(UI_ItemSlot slot)//显示浮窗，贴在格子旁边
     {
         InventoryItem item = slot.CurrentItem();
 
@@ -144,9 +148,11 @@ public class UI_Inventory : MonoBehaviour
             tooltipBody.text = body;
         }
 
-        PlaceAtPointer(tooltip, screenPosition, 18f);
+        tooltip.gameObject.SetActive(true);//先按最终内容量出真实尺寸，再定位
+        ForceUpdateText(tooltip.gameObject);
+
+        PlaceBesideSlot(tooltip, slot.transform as RectTransform, tooltipGap);
         SetGroup(tooltipGroup, true);
-        ForceUpdateText(tooltip.gameObject);//显示后重建网格
     }
 
     public void HideTooltip()
@@ -154,7 +160,7 @@ public class UI_Inventory : MonoBehaviour
         SetGroup(tooltipGroup, false);
     }
 
-    public void ShowUseButton(int index, Vector2 screenPosition)//在鼠标处弹出"使用/装备"按钮
+    public void ShowUseButton(int index, UI_ItemSlot slot)//在格子旁边弹出"使用/装备"按钮
     {
         if (useButton == null)
             return;
@@ -162,19 +168,20 @@ public class UI_Inventory : MonoBehaviour
         pendingIndex = index;
         selectedIndex = index;//记下来，之后按丢弃键时用
 
+        RectTransform slotRect = slot != null ? slot.transform as RectTransform : null;
         SlotAction action = ActionFor(inventory != null ? inventory.GetItem(index) : null);
 
         if (action == SlotAction.None)
         {
             //像"油"这种既不能装备、也不是消耗品的物品：只给一个"丢弃"
             SetGroup(useButtonGroup, false);
-            PlaceAtPointer(dropButton, screenPosition, 12f);
+            PlaceBesideSlot(dropButton, slotRect, buttonGap);
         }
         else
         {
             UpdateButtonLabel(index);//装备 / 使用
 
-            PlaceAtPointer(useButton, screenPosition, 12f);
+            PlaceBesideSlot(useButton, slotRect, buttonGap);
             SetGroup(useButtonGroup, true);
             ForceUpdateText(useButton.gameObject);//显示后重建网格
 
@@ -366,30 +373,43 @@ public class UI_Inventory : MonoBehaviour
         HideTooltip();
     }
 
-    private void PlaceAtPointer(RectTransform target, Vector2 screenPosition, float offset)//放到鼠标旁并夹紧屏幕
+    //把 target 摆在格子旁边：优先右侧，右边放不下就放左侧；垂直居中于格子，都不遮挡格子本身
+    private void PlaceBesideSlot(RectTransform target, RectTransform slotRect, float gap)
     {
-        if (canvas == null)
+        if (canvas == null || target == null || slotRect == null)
             return;
 
         RectTransform canvasRect = canvas.GetComponent<RectTransform>();
         Camera cam = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
 
-        Vector2 local;
-        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPosition, cam, out local))
+        Vector3[] corners = new Vector3[4];
+        slotRect.GetWorldCorners(corners);//0=左下 1=左上 2=右上 3=右下
+
+        Vector2 slotMin;
+        Vector2 slotMax;
+
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, RectTransformUtility.WorldToScreenPoint(cam, corners[0]), cam, out slotMin))
             return;
 
-        Vector2 size = target.sizeDelta;
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, RectTransformUtility.WorldToScreenPoint(cam, corners[2]), cam, out slotMax))
+            return;
+
+        Vector2 size = target.rect.size;
         Vector2 canvasSize = canvasRect.sizeDelta;
+
         float halfW = size.x * 0.5f;
         float halfH = size.y * 0.5f;
+        float minX = -canvasSize.x * 0.5f + halfW;
+        float maxX = canvasSize.x * 0.5f - halfW;
 
-        float x = local.x + offset + halfW;
-        float y = local.y - offset - halfH;
+        float rightX = slotMax.x + gap + halfW;
+        float x = rightX > maxX ? slotMin.x - gap - halfW : rightX;//右边放不下就翻到左边
 
-        x = Mathf.Clamp(x, -canvasSize.x * 0.5f + halfW, canvasSize.x * 0.5f - halfW);
-        y = Mathf.Clamp(y, -canvasSize.y * 0.5f + halfH, canvasSize.y * 0.5f - halfH);
+        float slotCenterY = (slotMin.y + slotMax.y) * 0.5f;
 
-        target.anchoredPosition = new Vector2(x, y);
+        target.anchoredPosition = new Vector2(
+            Mathf.Clamp(x, minX, maxX),
+            Mathf.Clamp(slotCenterY, -canvasSize.y * 0.5f + halfH, canvasSize.y * 0.5f - halfH));
     }
 
     private void ApplyFontToAll()//统一字体

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemName: "\u67AA"
   description: "\u8FDC\u7A0B\u6B66\u5668\uFF0C\u5171 6 \u53D1"
-  icon: {fileID: 0}
+  icon: {fileID: 2946347121614945749, guid: e824dae39d453d84c872f83811509a56, type: 3}
   maxStack: 1
   isConsumable: 0
   worldPrefab: {fileID: 5155587711817214362, guid: 57755bde910c62a41ab1d156b7ac4385, type: 3}

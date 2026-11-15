@@ -180,8 +180,8 @@ public class YSortTests
     {
         string[] paths =
         {
-            "Assets/Prefab/Item_Knife.prefab",
-            "Assets/Prefab/Item_IronBall.prefab"
+            "Assets/Prefab/Item/Item_Knife.prefab",
+            "Assets/Prefab/Item/Item_IronBall.prefab"
         };
 
         foreach (string path in paths)

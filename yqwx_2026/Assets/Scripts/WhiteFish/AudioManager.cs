@@ -17,6 +17,8 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private List<AudioEntry> musicList = new List<AudioEntry>();
     [SerializeField] private List<AudioEntry> sfxList = new List<AudioEntry>();
 
+    [SerializeField] private string defaultMusicId;//启动时自动播放的音乐 id，留空则不播
+
     [Range(0f, 1f)] [SerializeField] private float musicVolume = 1f;
     [Range(0f, 1f)] [SerializeField] private float sfxVolume = 1f;
 
@@ -68,7 +70,14 @@ public class AudioManager : MonoBehaviour
         sfxSource.playOnAwake = false;
     }
 
-    
+    private void Start()//启动时自动播放默认背景音乐
+    {
+        if (string.IsNullOrEmpty(defaultMusicId))
+            return;
+
+        PlayMusic(defaultMusicId);
+    }
+
     public void PlayMusic(string id, bool loop = true)//播放背景音乐：同一首正在播就不重播，换歌则切到新音乐
     {
         if (string.IsNullOrEmpty(id))

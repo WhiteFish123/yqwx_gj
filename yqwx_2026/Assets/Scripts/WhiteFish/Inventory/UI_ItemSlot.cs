@@ -54,7 +54,7 @@ public class UI_ItemSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     public void OnPointerEnter(PointerEventData eventData)//悬停
     {
         if (ui != null)
-            ui.ShowTooltip(this, eventData.position);
+            ui.ShowTooltip(this);
     }
 
     public void OnPointerExit(PointerEventData eventData)//移出
@@ -71,6 +71,6 @@ public class UI_ItemSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         if (CurrentItem() == null)
             ui.HideUseButton();
         else
-            ui.ShowUseButton(index, eventData.position);
+            ui.ShowUseButton(index, this);
     }
 }

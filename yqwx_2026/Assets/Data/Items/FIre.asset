@@ -13,6 +13,10 @@ MonoBehaviour:
   m_Name: FIre
   m_EditorClassIdentifier: 
   itemName: "\u6253\u706B\u673A"
-  description: "\u5144\u5F1F\u501F\u4E2A\u706B\u2014\u2014\u53EF\u60DC\u518D\u4E5F\u542C\u4E0D\u5230\u8FD9\u53E5\u8BDD"
-  icon: {fileID: 21300000, guid: ebe8b8f47bb29cf46b8c382f5cbd20e9, type: 3}
+  description: "\u4E00\u4E2A\u5FEB\u6CA1\u6CB9\u7684\u6253\u706B\u673A"
+  icon: {fileID: 5552418039501284307, guid: 1fe2b458e34ce834f997565dcb38834b, type: 3}
   maxStack: 10
+  isConsumable: 0
+  worldPrefab: {fileID: 0}
+  heldPrefab: {fileID: 0}
+  maxUses: -1
