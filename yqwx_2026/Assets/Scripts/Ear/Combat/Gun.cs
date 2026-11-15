@@ -10,8 +10,7 @@ public class Gun : WeaponBase
     public float bulletSpeed = 16f;//子弹飞行速度（单位：米/秒）
     public float spawnOffset = 0.6f;  //从身前多远生成，避免一出生就打到自己
 
-    protected overr
-        ide void DoUse(Vector2 origin, Vector2 facing)
+    protected override void DoUse(Vector2 origin, Vector2 facing)
     {
         if (bulletPrefab == null)
         {
