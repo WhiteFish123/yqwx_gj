@@ -21,6 +21,13 @@ public static class ItemUseEffects
                 if (health == null)
                     return false;
 
+                //满血：不消耗道具，弹一句提示（和"手上按 J 喝"保持一致）
+                if (health.currentHealth >= health.maxHealth)
+                {
+                    ScreenMessage.Show("我感觉良好，不需要使用这个");
+                    return false;
+                }
+
                 return health.Heal(Mathf.Max(1, data.effectAmount));
 
             default:
