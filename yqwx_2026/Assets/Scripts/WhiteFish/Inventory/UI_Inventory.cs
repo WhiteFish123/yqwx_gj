@@ -19,14 +19,14 @@ public class UI_Inventory : MonoBehaviour
     [Header("手持栏交互")]
     [SerializeField] private KeyCode dropKey = KeyCode.X;//丢弃的快捷键（和界面上的"丢弃"按钮等效）
     [SerializeField] private float dropDistance = 0.8f;//丢到地上时离玩家多远（一格左右）
-    [SerializeField] private float dropButtonGap = 6f;//"丢弃"按钮与"装备/使用"按钮之间留多少像素
+    [SerializeField] private float dropButtonGap = 6f;//"丢弃"按钮与"装备/使用"按钮之间的水平间隙
 
     [Header("字体")]
     [SerializeField] private TMP_FontAsset fontOverride;//留空则用全局默认
 
     [Header("布局")]
     [SerializeField] private float tooltipGap = 8f;//浮窗与格子之间的空隙（像素）
-    [SerializeField] private float buttonGap = 8f;//按钮与格子之间的空隙（像素）
+    [SerializeField] private float tooltipShiftLeft = 0f;//浮窗整体左移量（像素），0 表示紧贴格子右侧不遮挡
 
     private Inventory inventory;//背包数据
     private Canvas canvas;//所在画布
@@ -148,10 +148,12 @@ public class UI_Inventory : MonoBehaviour
             tooltipBody.text = body;
         }
 
+        RectTransform slotRect = slot.transform as RectTransform;
+
         tooltip.gameObject.SetActive(true);//先按最终内容量出真实尺寸，再定位
         ForceUpdateText(tooltip.gameObject);
 
-        PlaceBesideSlot(tooltip, slot.transform as RectTransform, tooltipGap);
+        PlaceBesideSlot(tooltip, slotRect, tooltipGap, tooltipShiftLeft);
         SetGroup(tooltipGroup, true);
     }
 
@@ -160,7 +162,7 @@ public class UI_Inventory : MonoBehaviour
         SetGroup(tooltipGroup, false);
     }
 
-    public void ShowUseButton(int index, UI_ItemSlot slot)//在格子旁边弹出"使用/装备"按钮
+    public void ShowUseButton(int index, UI_ItemSlot slot)//在提示栏里显示"使用/装备"与"丢弃"
     {
         if (useButton == null)
             return;
@@ -168,24 +170,18 @@ public class UI_Inventory : MonoBehaviour
         pendingIndex = index;
         selectedIndex = index;//记下来，之后按丢弃键时用
 
-        RectTransform slotRect = slot != null ? slot.transform as RectTransform : null;
         SlotAction action = ActionFor(inventory != null ? inventory.GetItem(index) : null);
 
         if (action == SlotAction.None)
         {
             //像"油"这种既不能装备、也不是消耗品的物品：只给一个"丢弃"
             SetGroup(useButtonGroup, false);
-            PlaceBesideSlot(dropButton, slotRect, buttonGap);
         }
         else
         {
             UpdateButtonLabel(index);//装备 / 使用
-
-            PlaceBesideSlot(useButton, slotRect, buttonGap);
             SetGroup(useButtonGroup, true);
             ForceUpdateText(useButton.gameObject);//显示后重建网格
-
-            PlaceDropButton();//"丢弃"紧贴在它下面
         }
 
         SetGroup(dropButtonGroup, true);
@@ -261,7 +257,7 @@ public class UI_Inventory : MonoBehaviour
         label.text = ActionFor(item) == SlotAction.Equip ? "装备" : "使用";
     }
 
-    //运行时克隆"装备/使用"按钮，得到一个外观、字体完全一致的"丢弃"按钮
+    //运行时克隆"装备/使用"按钮，得到一个外观、字体完全一致的"丢弃"按钮（并排放在它右边）
     //（这样你不需要在场景里再拖一个按钮，也不会出现两套样式不一致）
     private void CreateDropButton()
     {
@@ -287,30 +283,11 @@ public class UI_Inventory : MonoBehaviour
             button.onClick.AddListener(DropSelected);
         }
 
+        dropButton.anchoredPosition = useButton.anchoredPosition
+                                    + new Vector2(useButton.sizeDelta.x + dropButtonGap, 0f);//并排在右边
+
         ForceUpdateText(clone);
         SetGroup(dropButtonGroup, false);
-    }
-
-    //把"丢弃"按钮摆在"装备/使用"按钮正下方（同宽、同 x）
-    private void PlaceDropButton()
-    {
-        if (dropButton == null || useButton == null)
-            return;
-
-        dropButton.sizeDelta = useButton.sizeDelta;
-        dropButton.anchoredPosition = useButton.anchoredPosition
-                                    - new Vector2(0f, useButton.sizeDelta.y + dropButtonGap);
-
-        //贴到屏幕底部时不要掉出画布
-        if (canvas != null)
-        {
-            float halfHeight = dropButton.sizeDelta.y * 0.5f;
-            float minY = -canvas.GetComponent<RectTransform>().sizeDelta.y * 0.5f + halfHeight;
-
-            Vector2 position = dropButton.anchoredPosition;
-            if (position.y < minY)
-                dropButton.anchoredPosition = new Vector2(position.x, minY);
-        }
     }
 
     //背包 → 手上。手上有东西时先把它收回背包，等价于"交换"
@@ -373,8 +350,8 @@ public class UI_Inventory : MonoBehaviour
         HideTooltip();
     }
 
-    //把 target 摆在格子旁边：优先右侧，右边放不下就放左侧；垂直居中于格子，都不遮挡格子本身
-    private void PlaceBesideSlot(RectTransform target, RectTransform slotRect, float gap)
+    //把 target 摆在格子旁边：优先右侧，右边放不下就放左侧；垂直居中于格子；shiftLeft 让它再往左挪一段
+    private void PlaceBesideSlot(RectTransform target, RectTransform slotRect, float gap, float shiftLeft)
     {
         if (canvas == null || target == null || slotRect == null)
             return;
@@ -395,21 +372,21 @@ public class UI_Inventory : MonoBehaviour
             return;
 
         Vector2 size = target.rect.size;
+        Vector2 pivot = target.pivot;//浮窗的 pivot 在左上角，所以位置要按左边缘算
         Vector2 canvasSize = canvasRect.sizeDelta;
 
-        float halfW = size.x * 0.5f;
-        float halfH = size.y * 0.5f;
-        float minX = -canvasSize.x * 0.5f + halfW;
-        float maxX = canvasSize.x * 0.5f - halfW;
+        float left = slotMax.x + gap - shiftLeft;//元素左边缘
+        if (left + size.x > canvasSize.x * 0.5f)//右边放不下就翻到左边
+            left = slotMin.x - gap - size.x;
 
-        float rightX = slotMax.x + gap + halfW;
-        float x = rightX > maxX ? slotMin.x - gap - halfW : rightX;//右边放不下就翻到左边
+        float top = (slotMin.y + slotMax.y) * 0.5f + size.y * 0.5f;//元素顶边（与格子垂直居中）
 
-        float slotCenterY = (slotMin.y + slotMax.y) * 0.5f;
+        float clampedLeft = Mathf.Clamp(left, -canvasSize.x * 0.5f, canvasSize.x * 0.5f - size.x);
+        float clampedTop = Mathf.Clamp(top, -canvasSize.y * 0.5f + size.y, canvasSize.y * 0.5f);
 
         target.anchoredPosition = new Vector2(
-            Mathf.Clamp(x, minX, maxX),
-            Mathf.Clamp(slotCenterY, -canvasSize.y * 0.5f + halfH, canvasSize.y * 0.5f - halfH));
+            clampedLeft + pivot.x * size.x,
+            clampedTop - (1f - pivot.y) * size.y);
     }
 
     private void ApplyFontToAll()//统一字体
