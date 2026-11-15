@@ -2,20 +2,25 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
-// 暂停面板：按 ESC 弹出，不是独立场景，就是场景里的一个 Canvas 面板。
+// 暂停面板：按 ESC 弹出。不是独立场景，就是场景里的一个 Canvas 面板。
 //
 // 功能：
 //   - ESC 开/关
-//   - 暂停时把 Time.timeScale 设成 0（游戏逻辑全停），并锁住玩家输入
-//   - 恢复时把 timeScale 还原成"暂停前的值"（所以背包开着时按 ESC 也不会把它弄乱）
-//   - 音乐走 AudioManager：暂停时 PauseMusic，恢复时 ResumeMusic
+//   - 暂停时 Time.timeScale = 0（游戏逻辑全停），并锁住玩家输入
+//   - 恢复时把 timeScale 还原成"暂停前的值"（所以背包开着时按 ESC 也不会弄乱）
+//   - 音乐走 AudioManager：暂停 PauseMusic，恢复 ResumeMusic
 //   - 三个按钮：继续 / 返回主菜单 / 进入 SLScene
 //
-// 搭建（要你做）：
-//   1. Canvas 下放一个全屏面板（半透明黑背景 Image + 标题 + 3 个 Button）
-//   2. 给这个面板挂上本脚本
-//   3. 把 3 个 Button 分别拖进 Resume / Main Menu / SL Scene 三个槽
-//      （不拖也行：直接在按钮的 OnClick 里选 Resume / LoadMainMenu / LoadSLScene 这三个方法）
+// ★ 显隐方式（很重要）：
+//   如果脚本就挂在面板物体上，绝对不能用 SetActive(false) —— 那会把脚本自己也关掉，
+//   Update 不再执行，ESC 就再也打不开了。这种情况自动改用 CanvasGroup 调透明度。
+//   脚本挂在别的常驻物体上（Panel 指向子物体）时，才会用 SetActive。
+//
+// 搭建建议：
+//   1. Canvas 下建空物体 PauseMenuManager（常驻激活）挂本脚本
+//   2. 它下面放 PausePanel（背景 + 标题 + 3 个按钮），拖进 Panel 槽
+//   3. 3 个按钮分别拖进 Resume / Main Menu / SL Scene
+//   （也可以把脚本直接挂 PausePanel 上，但面板物体必须保持激活）
 public class PauseMenu : MonoBehaviour
 {
     [Header("引用")]
@@ -48,6 +53,7 @@ public class PauseMenu : MonoBehaviour
 
     private float timeScaleBeforePause = 1f;
     private PlayerBrain brain;
+    private CanvasGroup panelGroup;
 
     private void Awake()
     {
@@ -59,7 +65,33 @@ public class PauseMenu : MonoBehaviour
         if (mainMenuButton != null) mainMenuButton.onClick.AddListener(LoadMainMenu);
         if (slSceneButton != null) slSceneButton.onClick.AddListener(LoadSLScene);
 
-        panel.SetActive(false);
+        SetVisible(false);
+    }
+
+    //显隐面板。
+    //★ 脚本挂在面板自己身上时不能用 SetActive(false)：那会把脚本（含 Update）一起关掉，
+    //  ESC 就再也打不开了。这种情况改用 CanvasGroup 调透明度，物体保持激活。
+    private void SetVisible(bool visible)
+    {
+        if (panel == null)
+            return;
+
+        if (panel == gameObject)
+        {
+            if (panelGroup == null)
+            {
+                panelGroup = panel.GetComponent<CanvasGroup>();
+                if (panelGroup == null)
+                    panelGroup = panel.AddComponent<CanvasGroup>();
+            }
+
+            panelGroup.alpha = visible ? 1f : 0f;
+            panelGroup.blocksRaycasts = visible;
+            panelGroup.interactable = visible;
+            return;
+        }
+
+        panel.SetActive(visible);
     }
 
     private void Update()
@@ -86,7 +118,7 @@ public class PauseMenu : MonoBehaviour
         timeScaleBeforePause = Time.timeScale;
         Time.timeScale = 0f;
 
-        panel.SetActive(true);
+        SetVisible(true);
         SetPlayerInput(false);
 
         if (AudioManager.Instance != null)
@@ -100,7 +132,7 @@ public class PauseMenu : MonoBehaviour
         IsPaused = false;
 
         Time.timeScale = timeScaleBeforePause;
-        panel.SetActive(false);
+        SetVisible(false);
 
         //只有游戏真的在跑时才把操作还回去（背包还开着时保持锁住）
         SetPlayerInput(!Mathf.Approximately(Time.timeScale, 0f));
@@ -137,7 +169,7 @@ public class PauseMenu : MonoBehaviour
         //先还原时间，避免切过去还是暂停状态
         IsPaused = false;
         Time.timeScale = 1f;
-        panel.SetActive(false);
+        SetVisible(false);
 
         if (AudioManager.Instance != null)
             AudioManager.Instance.ResumeMusic();
