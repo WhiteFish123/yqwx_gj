@@ -54,11 +54,25 @@ public class PauseMenu : MonoBehaviour
     private float timeScaleBeforePause = 1f;
     private PlayerBrain brain;
     private CanvasGroup panelGroup;
+    private static PauseMenu active;//场景里只允许一个暂停面板（否则两份脚本都监听 ESC，按一下开又关）
 
     private void Awake()
     {
+        //防止场景里不小心放了两个暂停面板：后来的自动销毁
+        if (active != null && active != this)
+        {
+            Debug.LogWarning("PauseMenu：场景里已经有一个暂停面板了，多余的会被移除", this);
+            Destroy(gameObject);
+            return;
+        }
+
+        active = this;
+
         if (panel == null)
             panel = gameObject;
+
+        //做成 prefab 拖到任意场景都能用：不在 Canvas 下就自己建一个
+        EnsureCanvas();
 
         //按钮也可以在 Inspector 里手动连 OnClick；这里再连一次只是图方便
         if (resumeButton != null) resumeButton.onClick.AddListener(Resume);
@@ -66,6 +80,33 @@ public class PauseMenu : MonoBehaviour
         if (slSceneButton != null) slSceneButton.onClick.AddListener(LoadSLScene);
 
         SetVisible(false);
+
+        //没有 EventSystem 的话按钮点不了（ESC 仍然可用），提前提醒
+        if (FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
+            Debug.LogWarning("PauseMenu：场景里没有 EventSystem，暂停面板的按钮点不了（ESC 仍然可用）。" +
+                             "给场景加一个 UI → Event System 即可。", this);
+    }
+
+    //如果这个面板不在任何 Canvas 下，就自己建一个 Canvas 当父物体。
+    //这样把整个面板做成 prefab 后，丢到任何场景（哪怕场景里没有 Canvas）都能正常显示。
+    private void EnsureCanvas()
+    {
+        if (GetComponentInParent<Canvas>() != null)
+            return;
+
+        GameObject canvasGo = new GameObject("PauseMenuCanvas");
+
+        Canvas canvas = canvasGo.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 500;//盖在普通 UI 上面
+
+        CanvasScaler scaler = canvasGo.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+
+        canvasGo.AddComponent<GraphicRaycaster>();//没它按钮收不到点击
+
+        transform.SetParent(canvasGo.transform, false);
     }
 
     //显隐面板。
