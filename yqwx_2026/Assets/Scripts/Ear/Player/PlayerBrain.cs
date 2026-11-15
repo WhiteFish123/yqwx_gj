@@ -71,7 +71,11 @@ public class PlayerBrain : MonoBehaviour
     {
         if (anim == null || anim.runtimeAnimatorController == null) return;
 
+        //朝向优先用"当前按着的方向"：
+        //  跨格途中按了别的方向，人物立刻转身（视觉响应快），
+        //  但实际位移还是走完这一格 —— 网格游戏不能半路拐弯。
         Vector2Int facing = motor != null ? motor.Facing : Vector2Int.down;
+        if (moveInput != Vector2Int.zero) facing = moveInput;
 
         int dir = 0;
         if (facing == Vector2Int.up) dir = 1;
@@ -100,25 +104,45 @@ public class PlayerBrain : MonoBehaviour
         grabHeld = Input.GetKey(grabKey);
     }
 
-    private static Vector2Int ReadMoveInput()//一次读一个方向（优先级：上 下 左 右）
+    private static Vector2Int lastPressedDir = Vector2Int.zero;//最后按下的方向
+
+    private static Vector2Int ReadMoveInput()
     {
-        //★ 用 GetKey（按住持续为真）而不是 GetKeyDown。
+        //★ 读方向用的是 GetKey（按住持续为真），不是 GetKeyDown。
         //  原因：GetKeyDown 只在按下那一帧为真，而那一帧的输入会被"Idle→Move"的状态切换吃掉，
         //  MoveState 下一帧再读就已经是 0 了 —— 表现就是"按了方向键但人不动"。
-        //  用 GetKey 之后：按住 = 连续走格；轻点一下 = 也至少走一格。
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
-            return Vector2Int.up;
 
-        if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
-            return Vector2Int.down;
+        //① 记录"最后按下"的方向：同时按住两个键时，转向后按的那一个（玩家直觉）
+        if (PressDown(KeyCode.W, KeyCode.UpArrow)) lastPressedDir = Vector2Int.up;
+        else if (PressDown(KeyCode.S, KeyCode.DownArrow)) lastPressedDir = Vector2Int.down;
+        else if (PressDown(KeyCode.A, KeyCode.LeftArrow)) lastPressedDir = Vector2Int.left;
+        else if (PressDown(KeyCode.D, KeyCode.RightArrow)) lastPressedDir = Vector2Int.right;
 
-        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
-            return Vector2Int.left;
+        //② 最后按下的还按着，就用它
+        if (IsHeld(lastPressedDir))
+            return lastPressedDir;
 
-        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
-            return Vector2Int.right;
+        //③ 松开了，退回"还按着的任意一个方向"（兜底顺序：上 下 左 右）
+        if (IsHeld(Vector2Int.up)) return Vector2Int.up;
+        if (IsHeld(Vector2Int.down)) return Vector2Int.down;
+        if (IsHeld(Vector2Int.left)) return Vector2Int.left;
+        if (IsHeld(Vector2Int.right)) return Vector2Int.right;
 
         return Vector2Int.zero;
+    }
+
+    private static bool PressDown(KeyCode a, KeyCode b)
+    {
+        return Input.GetKeyDown(a) || Input.GetKeyDown(b);
+    }
+
+    private static bool IsHeld(Vector2Int dir)
+    {
+        if (dir == Vector2Int.up) return Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow);
+        if (dir == Vector2Int.down) return Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow);
+        if (dir == Vector2Int.left) return Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow);
+        if (dir == Vector2Int.right) return Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow);
+        return false;
     }
 
     // ===== 状态切换的公共入口 =====

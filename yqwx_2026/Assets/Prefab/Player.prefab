@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1 &5208354841333560807
 GameObject:
@@ -231,6 +231,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   grabKey: 102
+  inputEnabled: 1
 --- !u!114 &6198801603477462452
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -247,7 +248,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f60718293a4b5c6d7e8f90a1b2c3d4e5, type: 2}
   - {fileID: 11400000, guid: 0718293a4b5c6d7e8f90a1b2c3d4e5f6, type: 2}
   - {fileID: 11400000, guid: 18293a4b5c6d7e8f90a1b2c3d4e5f607, type: 2}
-  startingCounts: 010000000100000001000000 
+  startingCounts: 010000000100000001000000
 --- !u!114 &7700000000000000001
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -300,7 +301,7 @@ Animator:
   m_GameObject: {fileID: 5208354841333560807}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 655b0446a00252341b34d2347bff5df6, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
