@@ -62,6 +62,9 @@ public abstract class WeaponBase : MonoBehaviour, IUsable
         if (Time.time < nextUseTime) return 0f;              // 还在冷却
         if (!IsInfinite && remainingUses <= 0) return 0f;    // 次数已经用完
 
+        //★ 先问子类"这次能不能用"。否决就什么都不扣（次数、冷却都不变）
+        if (!CanUse(origin, facing)) return 0f;
+
         nextUseTime = Time.time + cooldown;
         if (!IsInfinite) remainingUses--;
 
@@ -83,4 +86,10 @@ public abstract class WeaponBase : MonoBehaviour, IUsable
 
     /// <summary>子类实现：怎么打出去（射线、区域判定、扔出弹丸……）</summary>
     protected abstract void DoUse(Vector2 origin, Vector2 facing);
+
+    /// <summary>
+    /// 子类可以否决这次使用（默认允许）。
+    /// 返回 false 时：不扣次数、不进冷却、不触发 DoUse —— 适合"满血不能喝血药"这类情况。
+    /// </summary>
+    protected virtual bool CanUse(Vector2 origin, Vector2 facing) => true;
 }

@@ -114,13 +114,16 @@ public class PlayerHealth : MonoBehaviour, IDamageable, IEnemyAttackTarget
         Hurt(damage);
     }
 
-    //扣血加血（以后可能有回血道具）
-    public void Heal(int amount)
+    //扣血加血（回血道具会用到）。
+    //返回 true = 真的回上了；满血时返回 false，上层据此决定要不要消耗道具
+    public bool Heal(int amount)
     {
-        if (IsDead || amount <= 0) return;
+        if (IsDead || amount <= 0) return false;
+        if (currentHealth >= maxHealth) return false;
 
         currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
         HealthChanged?.Invoke(currentHealth, maxHealth);
+        return true;
     }
 
     // ===== 受伤表现 =====
