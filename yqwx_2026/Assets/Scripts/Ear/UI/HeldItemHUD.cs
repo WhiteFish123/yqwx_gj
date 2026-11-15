@@ -41,6 +41,9 @@ public class HeldItemHUD : MonoBehaviour
     private int lastUses = int.MinValue;
     private CanvasGroup boxGroup;
 
+    private Vector2 iconCenter;        //图案框初始的视觉中心（相对父物体）
+    private bool iconCenterCached;
+
     private void Awake()
     {
         //给 boxRoot 加（或取）一个 CanvasGroup，用它来控制显隐
@@ -50,6 +53,9 @@ public class HeldItemHUD : MonoBehaviour
             if (boxGroup == null)
                 boxGroup = boxRoot.AddComponent<CanvasGroup>();
         }
+
+        //记下图案框原本的中心，之后按比例改尺寸时用它把位置补偿回来
+        CacheIconCenter();
     }
 
     private void Update()
@@ -125,6 +131,10 @@ public class HeldItemHUD : MonoBehaviour
 
     //按图片比例调整图案框的大小：高度固定，宽度 = 高度 × 宽高比，
     //太宽的图会等比缩小到 maxWidthRatio 倍以内，避免挤到名字文字。
+    //
+    //★ 改尺寸时必须补偿位置：
+    //  图案框的 Pivot 通常设在左边缘，宽度一变就是"从左边往右长"，
+    //  中心会跟着右移，看起来就偏离竖直轴心。这里把视觉中心钉回原位。
     private void FitIcon(Sprite sprite)
     {
         float aspect = sprite.rect.width / Mathf.Max(1f, sprite.rect.height);
@@ -139,7 +149,31 @@ public class HeldItemHUD : MonoBehaviour
             height = maxWidth / aspect;
         }
 
-        icon.rectTransform.sizeDelta = new Vector2(width, height);
+        RectTransform rect = icon.rectTransform;
+        rect.sizeDelta = new Vector2(width, height);
+
+        //视觉中心 = 锚点位置 + (0.5 - pivot) * 尺寸；把中心拉回初始位置
+        Vector2 pos = rect.anchoredPosition;
+        pos.x = iconCenter.x - (0.5f - rect.pivot.x) * width;
+        pos.y = iconCenter.y - (0.5f - rect.pivot.y) * height;
+        rect.anchoredPosition = pos;
+    }
+
+    //记下图案框初始的视觉中心（只在第一次用到时算一次）
+    private void CacheIconCenter()
+    {
+        if (icon == null || iconCenterCached)
+            return;
+
+        RectTransform rect = icon.rectTransform;
+
+        float width = rect.rect.width > 0f ? rect.rect.width : rect.sizeDelta.x;
+        float height = rect.rect.height > 0f ? rect.rect.height : rect.sizeDelta.y;
+
+        iconCenter.x = rect.anchoredPosition.x + (0.5f - rect.pivot.x) * width;
+        iconCenter.y = rect.anchoredPosition.y + (0.5f - rect.pivot.y) * height;
+
+        iconCenterCached = true;
     }
 
     //显隐：有 CanvasGroup 就调透明度（物体保持激活，脚本能继续跑）
