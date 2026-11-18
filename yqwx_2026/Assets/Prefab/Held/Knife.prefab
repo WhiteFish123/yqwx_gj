@@ -59,4 +59,5 @@ MonoBehaviour:
   slashDownAngle: -90
   mirrorWhenFacingLeft: 1
   slashLocalOffset: {x: 0, y: 0.2}
+  slashScale: 0.7
   drawHitBox: 0

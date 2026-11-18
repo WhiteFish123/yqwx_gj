@@ -37,6 +37,9 @@ public class Knife : WeaponBase
              "左右挥刀太靠下 → Y 填正数（例如 0.2）；左右有前后偏差 → 调 X")]
     public Vector2 slashLocalOffset = Vector2.zero;
 
+    [Tooltip("刀光整体缩放。刀光比判定框大就调小（0.7 左右），比判定框小就调大")]
+    public float slashScale = 1f;
+
     [Header("调试")]
     [Tooltip("勾上后挥刀时在 Scene 视图里画出红色判定框（Play 时看得到，不进游戏画面）")]
     public bool drawHitBox = false;
@@ -132,6 +135,9 @@ public class Knife : WeaponBase
         //Vector2 和 Vector3 不能直接相加（会报 CS0034 歧义），先转成 Vector3
         Vector3 position = (Vector3)(origin + facing * slashDistance) + rotation * localOffset;
         GameObject fx = Instantiate(slashPrefab, position, rotation);
+
+        //整体缩放：让刀光的可见范围贴合判定框（等比，避免把弧形拉歪）
+        fx.transform.localScale = Vector3.one * slashScale;
 
         if (mirror)
         {
