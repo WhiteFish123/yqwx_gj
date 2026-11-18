@@ -20,11 +20,13 @@ public class Enemy_StoneReturnState : Enemy_PathMoveState
 
     protected override void OnArrived()//回到原位，恢复待机
     {
+        stone.SetFacing(stone.initialFacing);//回到原位后朝向恢复成出生朝向
         stateMachine.ChangeState(stone.idleState);
     }
 
     protected override void OnNoTarget()//走不回去（被堵住），就地待机，避免卡死
     {
+        stone.SetFacing(stone.initialFacing);
         stateMachine.ChangeState(stone.idleState);
     }
 }

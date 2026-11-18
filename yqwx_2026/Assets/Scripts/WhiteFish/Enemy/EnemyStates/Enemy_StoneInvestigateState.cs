@@ -11,7 +11,12 @@ public class Enemy_StoneInvestigateState : Enemy_InvestigateState
         this.stone = stone;
     }
 
-    protected override void OnArrived()//看到了噪音来源，回原位
+    protected override void OnArrived()//到了噪音旁边；若箱子还在烧，父类会让我们原地守着
+    {
+        base.OnArrived();
+    }
+
+    protected override void OnWatchFinished()//守候结束（箱子熄灭）→ 走回原位
     {
         stone.GoHome();
     }

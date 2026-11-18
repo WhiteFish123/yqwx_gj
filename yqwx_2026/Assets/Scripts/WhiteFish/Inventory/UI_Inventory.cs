@@ -13,44 +13,45 @@ public class UI_Inventory : MonoBehaviour
     [SerializeField] private TMP_Text tooltipTitle;//浮窗标题
     [SerializeField] private TMP_Text tooltipBody;//浮窗描述
     [SerializeField] private RectTransform useButton;//使用按钮
-    [SerializeField] private CanvasGroup tooltipGroup;//浮窗透明度控制
-    [SerializeField] private CanvasGroup useButtonGroup;//按钮透明度控制
+    [SerializeField] private CanvasGroup tooltipGroup;//浮窗透明度控�?
+    [SerializeField] private CanvasGroup useButtonGroup;//按钮透明度控�?
 
-    [Header("手持栏交互")]
-    [SerializeField] private KeyCode dropKey = KeyCode.X;//丢弃的快捷键（和界面上的"丢弃"按钮等效）
+    [Header("\u624B\u6301\u680F\u4EA4\u4E92")]
+    [SerializeField] private KeyCode dropKey = KeyCode.X;//drop hotkey, same as the on-screen button
     [SerializeField] private float dropDistance = 0.8f;//丢到地上时离玩家多远（一格左右）
-    [SerializeField] private float dropButtonGap = 6f;//"丢弃"按钮与"装备/使用"按钮之间的水平间隙
+    [SerializeField] private float dropButtonGap = 6f;//"丢弃"按钮�?装备/使用"按钮之间的水平间�?
+    [SerializeField] private float actionButtonGap = 8f;//gap between the tooltip bottom and the buttons
 
     [Header("字体")]
     [SerializeField] private TMP_FontAsset fontOverride;//留空则用全局默认
 
     [Header("布局")]
     [SerializeField] private float tooltipGap = 8f;//浮窗与格子之间的空隙（像素）
-    [SerializeField] private float tooltipShiftLeft = 0f;//浮窗整体左移量（像素），0 表示紧贴格子右侧不遮挡
+    [SerializeField] private float tooltipShiftLeft = 0f;//浮窗整体左移量（像素），0 表示紧贴格子右侧不遮�?
 
     private Inventory inventory;//背包数据
-    private Canvas canvas;//所在画布
-    private readonly List<UI_ItemSlot> slots = new List<UI_ItemSlot>();//所有格子
-    private int pendingIndex = -1;//等待使用/装备的格子
-    private int selectedIndex = -1;//当前点中的格子（丢弃、收回时用；点过一次就一直记着）
+    private Canvas canvas;//所在画�?
+    private readonly List<UI_ItemSlot> slots = new List<UI_ItemSlot>();//所有格�?
+    private int pendingIndex = -1;//等待使用/装备的格�?
+    private int selectedIndex = -1;//当前点中的格子（丢弃、收回时用；点过一次就一直记着�?
     private RectTransform dropButton;//运行时克隆出来的"丢弃"按钮
     private CanvasGroup dropButtonGroup;//它的显隐控制
     private float timeScaleBeforeOpen = 1f;//打开前的时间缩放
 
     private void Awake()
     {
-        //老场景里没有这个字段的值时会读成 None，这里兜一下，保证默认就是 X
+        //老场景里没有这个字段的值时会读�?None，这里兜一下，保证默认就是 X
         if (dropKey == KeyCode.None) dropKey = KeyCode.X;
 
         inventory = FindFirstObjectByType<Inventory>();
         canvas = GetComponentInParent<Canvas>();
 
-        GetComponentsInChildren(true, slots);//自动收集所有格子
+        GetComponentsInChildren(true, slots);//自动收集所有格�?
 
         ApplyFontToAll();
         HideTooltip();
         HideUseButton();
-        CreateDropButton();//克隆一个"丢弃"按钮，贴在"装备/使用"按钮下面
+        CreateDropButton();//克隆一�?丢弃"按钮，贴�?装备/使用"按钮下面
 
         if (panel != null)
             panel.SetActive(false);
@@ -62,6 +63,8 @@ public class UI_Inventory : MonoBehaviour
 
         if (inventory != null)
             inventory.OnChanged += RefreshAll;
+
+        ReparentActionButtons();//the buttons must not live under Tooltip, or its CanvasGroup hides them too
     }
 
     private void OnDestroy()
@@ -69,8 +72,8 @@ public class UI_Inventory : MonoBehaviour
         if (inventory != null)
             inventory.OnChanged -= RefreshAll;
 
-        if (panel != null && panel.activeSelf)//销毁时恢复时间，避免卡在暂停
-            Time.timeScale = timeScaleBeforeOpen;
+        if (panel != null && panel.activeSelf)//销毁时恢复时间，避免卡在暂�?
+            if (!IsOtherPauseActive()) Time.timeScale = 1f;//do not carry paused state into the next scene
     }
 
     private void Update()
@@ -78,24 +81,26 @@ public class UI_Inventory : MonoBehaviour
         if (panel == null)
             return;
 
-        if (Input.GetKeyDown(KeyCode.B))//B 键开关背包
+        if (Input.GetKeyDown(KeyCode.B))//B 键开关背�?
         {
             SetPanelVisible(!panel.activeSelf);
             return;
         }
 
-        if (!panel.activeSelf)//下面这个键只在背包打开时生效
+
+        RecoverStuckTimeScale();//no pause source but time is frozen: rescue it
+        if (!panel.activeSelf)//下面这个键只在背包打开时生�?
             return;
 
-        HideTooltipIfPointerOnIt();//鼠标压到浮窗上就收起，避免浮窗挡住操作
+        HideTooltipIfPointerOnIt();//鼠标压到浮窗上就收起，避免浮窗挡住操�?
 
         if (Input.GetKeyDown(dropKey))
             DropSelected();
     }
 
-    //鼠标进入浮窗覆盖的区域时收起浮窗。
-    //只靠格子的 PointerExit 不够：浮窗左移后会盖住格子的一部分，
-    //鼠标移到那部分上时仍然"在格子里"，浮窗就会一直显示。
+    //鼠标进入浮窗覆盖的区域时收起浮窗�?
+    //只靠格子�?PointerExit 不够：浮窗左移后会盖住格子的一部分�?
+    //鼠标移到那部分上时仍�?在格子里"，浮窗就会一直显示�?
     private void HideTooltipIfPointerOnIt()
     {
         if (tooltip == null || tooltipGroup == null || tooltipGroup.alpha <= 0f)
@@ -118,16 +123,16 @@ public class UI_Inventory : MonoBehaviour
         bool wasVisible = panel.activeSelf;
         panel.SetActive(visible);
 
-        if (visible && !wasVisible)//打开：暂停外界
+        if (visible && !wasVisible)//打开：暂停外�?
         {
-            timeScaleBeforeOpen = Time.timeScale;
+            timeScaleBeforeOpen = Time.timeScale > 0f ? Time.timeScale : 1f;//guard: never snapshot 0
             Time.timeScale = 0f;
 
             RefreshAll();
         }
-        else if (!visible && wasVisible)//关闭：恢复时间
+        else if (!visible && wasVisible)//关闭：恢复时�?
         {
-            Time.timeScale = timeScaleBeforeOpen;
+            Time.timeScale = IsOtherPauseActive() ? 0f : timeScaleBeforeOpen;//keep frozen if pause menu is still open
         }
 
         if (!visible)
@@ -137,13 +142,71 @@ public class UI_Inventory : MonoBehaviour
         }
     }
 
-    private void RefreshAll()//刷新所有格子
+    //Is there another pause source (the pause menu) currently holding the game frozen?
+    private static bool IsOtherPauseActive()
+    {
+        PauseMenu menu = FindFirstObjectByType<PauseMenu>();
+        return menu != null && menu.IsPaused;
+    }
+
+    //If the inventory is closed, no pause source is active, but time is still frozen,
+    //restore it. This covers the case where the pause menu restored a stale 0 snapshot.
+    private void RecoverStuckTimeScale()
+    {
+        if (panel == null || panel.activeSelf)
+            return;
+
+        if (Time.timeScale > 0f || IsOtherPauseActive())
+            return;
+
+        Time.timeScale = 1f;
+    }
+
+
+    //Move the action buttons out from under Tooltip: Tooltip owns a CanvasGroup whose alpha/raycast
+    //settings cascade to children, so a button parented there becomes invisible and unclickable.
+    private void ReparentActionButtons()
+    {
+        if (useButton == null || tooltip == null)
+            return;
+
+        if (!useButton.IsChildOf(tooltip))
+            return;
+
+        Transform target = canvas != null ? canvas.transform : transform;
+        useButton.SetParent(target, true);//keep world position so the authoring layout is preserved
+
+        if (dropButton != null)
+            dropButton.SetParent(target, true);
+    }
+
+    //Place the use/drop buttons directly under the tooltip so they follow it.
+    private void PlaceActionButtons()
+    {
+        if (useButton == null)
+            return;
+
+        if (tooltip != null && tooltip.gameObject.activeSelf && useButton.parent != null)
+        {
+            Vector3[] corners = new Vector3[4];
+            tooltip.GetWorldCorners(corners);//0=���� 1=���� 2=���� 3=����
+
+            Vector3 local = useButton.parent.InverseTransformPoint(corners[0]);//tooltip bottom-left
+            useButton.anchoredPosition = new Vector2(local.x, local.y - actionButtonGap);
+        }
+
+        if (dropButton != null)
+            dropButton.anchoredPosition = useButton.anchoredPosition
+                + new Vector2(useButton.sizeDelta.x + dropButtonGap, 0f);
+    }
+
+    private void RefreshAll()//刷新所有格�?
     {
         foreach (UI_ItemSlot slot in slots)
             slot.Refresh();
     }
 
-    public void ShowTooltip(UI_ItemSlot slot)//显示浮窗，贴在格子旁边
+    public void ShowTooltip(UI_ItemSlot slot)//显示浮窗，贴在格子旁�?
     {
         InventoryItem item = slot.CurrentItem();
 
@@ -160,16 +223,16 @@ public class UI_Inventory : MonoBehaviour
         {
             string body = item.data.description;
 
-            //有使用次数的物品（武器）顺带把耐久显示出来，玩家才知道还能用几次
+            //有使用次数的物品（武器）顺带把耐久显示出来，玩家才知道还能用几�?
             if (item.data.maxUses >= 0)
-                body += "\n剩余次数：" + item.remainingUses + " / " + item.data.maxUses;
+                body += "\n\u5269\u4F59\u6B21\u6570\uFF1A" + item.remainingUses + " / " + item.data.maxUses;
 
             tooltipBody.text = body;
         }
 
         RectTransform slotRect = slot.transform as RectTransform;
 
-        tooltip.gameObject.SetActive(true);//先按最终内容量出真实尺寸，再定位
+        tooltip.gameObject.SetActive(true);//先按最终内容量出真实尺寸，再定�?
         ForceUpdateText(tooltip.gameObject);
 
         PlaceBesideSlot(tooltip, slotRect, tooltipGap, tooltipShiftLeft);
@@ -181,7 +244,7 @@ public class UI_Inventory : MonoBehaviour
         SetGroup(tooltipGroup, false);
     }
 
-    public void ShowUseButton(int index, UI_ItemSlot slot)//在提示栏里显示"使用/装备"与"丢弃"
+    public void ShowUseButton(int index, UI_ItemSlot slot)//在提示栏里显�?使用/装备"�?丢弃"
     {
         if (useButton == null)
             return;
@@ -193,27 +256,29 @@ public class UI_Inventory : MonoBehaviour
 
         if (action == SlotAction.None)
         {
-            //像"油"这种既不能装备、也不是消耗品的物品：只给一个"丢弃"
+            //�?�?这种既不能装备、也不是消耗品的物品：只给一�?丢弃"
             SetGroup(useButtonGroup, false);
         }
         else
         {
             UpdateButtonLabel(index);//装备 / 使用
             SetGroup(useButtonGroup, true);
-            ForceUpdateText(useButton.gameObject);//显示后重建网格
+            ForceUpdateText(useButton.gameObject);//显示后重建网�?
         }
 
+        PlaceActionButtons();//stick both buttons right under the tooltip
         SetGroup(dropButtonGroup, true);
     }
 
     public void HideUseButton()
     {
         pendingIndex = -1;
+        selectedIndex = -1;//clear it, otherwise a later drop key would hit a different item
         SetGroup(useButtonGroup, false);
         SetGroup(dropButtonGroup, false);//"丢弃"跟着一起藏
     }
 
-    //双击格子的快捷使用：装备的走装备，消耗品用掉一个
+    //双击格子的快捷使用：装备的走装备，消耗品用掉一�?
     public void ActivateSlot(int index)
     {
         if (inventory == null)
@@ -226,20 +291,12 @@ public class UI_Inventory : MonoBehaviour
         HideUseButton();
         HideTooltip();
 
-        switch (ActionFor(item))
-        {
-            case SlotAction.Equip:
-                EquipFromBag(index);
-                break;
-
-            case SlotAction.Use:
-                inventory.UseItem(index);
-                break;
-        }
+        ExecuteAction(index, item);
     }
 
-    public void UsePendingItem()//按钮点击时执行
-    {        int index = pendingIndex;
+    public void UsePendingItem()//button click handler
+    {
+        int index = pendingIndex;
 
         HideUseButton();
         HideTooltip();
@@ -251,6 +308,12 @@ public class UI_Inventory : MonoBehaviour
         if (item == null)
             return;
 
+        ExecuteAction(index, item);
+    }
+
+    //Both entry points share this: equip or consume, chosen by the item data
+    private void ExecuteAction(int index, InventoryItem item)
+    {
         switch (ActionFor(item))
         {
             case SlotAction.Equip:
@@ -260,34 +323,14 @@ public class UI_Inventory : MonoBehaviour
             case SlotAction.Use:
                 inventory.UseItem(index);
                 break;
-
-            //SlotAction.None：按钮根本不会出现，这里什么都不做
-            //（防止"油"这种物品被当成消耗品吃掉）
         }
     }
 
-    // ===== 背包 ↔ 手持栏 ↔ 地上 =====
+    // ===== 背包 �?手持�?�?地上 =====
 
-    //点开一个格子之后能做什么
-    private enum SlotAction
-    {
-        None,   //既不能装备也不是消耗品（油、钥匙……）：只能丢弃
-        Equip,  //有 heldPrefab → 装到手上
-        Use     //isConsumable → 用掉一个
-    }
+    //点开一个格子之后能做什�?
 
-    private static SlotAction ActionFor(InventoryItem item)
-    {
-        if (item == null || item.data == null) return SlotAction.None;
-
-        //消耗品优先走"使用"：血药这种既能拿在手上按 J 喝，也能在背包里点"使用"
-        if (item.data.isConsumable) return SlotAction.Use;
-
-        //非消耗品里有 heldPrefab 的才是"能装到手上的东西"（枪、刀、铁球、打火机）
-        if (item.data.heldPrefab != null) return SlotAction.Equip;
-
-        return SlotAction.None;
-    }
+    private static SlotAction ActionFor(InventoryItem item) => InventoryActions.ActionFor(item);//pure rule lives in InventoryActions
 
     //按钮文字跟着物品类型变：装备 / 使用
     private void UpdateButtonLabel(int index)
@@ -303,7 +346,7 @@ public class UI_Inventory : MonoBehaviour
         label.text = ActionFor(item) == SlotAction.Equip ? "装备" : "使用";
     }
 
-    //运行时克隆"装备/使用"按钮，得到一个外观、字体完全一致的"丢弃"按钮（并排放在它右边）
+    //运行时克�?装备/使用"按钮，得到一个外观、字体完全一致的"丢弃"按钮（并排放在它右边�?
     //（这样你不需要在场景里再拖一个按钮，也不会出现两套样式不一致）
     private void CreateDropButton()
     {
@@ -325,18 +368,18 @@ public class UI_Inventory : MonoBehaviour
         Button button = clone.GetComponent<Button>();
         if (button != null)
         {
-            button.onClick = new Button.ButtonClickedEvent();//清掉克隆过来的"装备"回调
+            button.onClick = new Button.ButtonClickedEvent();//清掉克隆过来�?装备"回调
             button.onClick.AddListener(DropSelected);
         }
 
         dropButton.anchoredPosition = useButton.anchoredPosition
-                                    + new Vector2(useButton.sizeDelta.x + dropButtonGap, 0f);//并排在右边
+                                    + new Vector2(useButton.sizeDelta.x + dropButtonGap, 0f);//并排在右�?
 
         ForceUpdateText(clone);
         SetGroup(dropButtonGroup, false);
     }
 
-    //背包 → 手上。手上有东西时先把它收回背包，等价于"交换"
+    //背包 �?手上。手上有东西时先把它收回背包，等价于"交换"
     private bool EquipFromBag(int index)
     {
         if (inventory == null)
@@ -346,7 +389,7 @@ public class UI_Inventory : MonoBehaviour
         if (slot == null)
             return false;
 
-        //先取出要装备的那件，腾出一个格子，这样旧武器一定放得回去
+        //先取出要装备的那件，腾出一个格子，这样旧武器一定放得回�?
         InventoryItem item = inventory.RemoveItem(index);
         if (item == null)
             return false;
@@ -361,11 +404,11 @@ public class UI_Inventory : MonoBehaviour
         if (slot.Equip(item))
             return true;
 
-        inventory.AddExistingItem(item);//装不上（比如没有 IUsable）→ 退回背包
+        inventory.AddExistingItem(item);//装不上（比如没有 IUsable）→ 退回背�?
         return false;
     }
 
-    //背包 → 地上（按 X 或点界面上的"丢弃"）：丢在玩家面前一格
+    //背包 �?地上（按 X 或点界面上的"丢弃"）：丢在玩家面前一�?
     public void DropSelected()
     {
         if (inventory == null || selectedIndex < 0)
@@ -374,7 +417,7 @@ public class UI_Inventory : MonoBehaviour
         InventoryItem item = inventory.GetItem(selectedIndex);
         if (item == null || item.data == null || item.data.worldPrefab == null)
         {
-            Debug.LogWarning("这件物品没有设置 worldPrefab，无法丢到地上", this);
+            Debug.LogWarning("\u8FD9\u4EF6\u7269\u54C1\u6CA1\u6709\u8BBE\u7F6E worldPrefab\uFF0C\u65E0\u6CD5\u4E22\u5230\u5730\u4E0A", this);
             return;
         }
 
@@ -396,44 +439,7 @@ public class UI_Inventory : MonoBehaviour
         HideTooltip();
     }
 
-    //把 target 摆在格子旁边：优先右侧，右边放不下就放左侧；垂直居中于格子；shiftLeft 让它再往左挪一段
-    private void PlaceBesideSlot(RectTransform target, RectTransform slotRect, float gap, float shiftLeft)
-    {
-        if (canvas == null || target == null || slotRect == null)
-            return;
-
-        RectTransform canvasRect = canvas.GetComponent<RectTransform>();
-        Camera cam = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
-
-        Vector3[] corners = new Vector3[4];
-        slotRect.GetWorldCorners(corners);//0=左下 1=左上 2=右上 3=右下
-
-        Vector2 slotMin;
-        Vector2 slotMax;
-
-        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, RectTransformUtility.WorldToScreenPoint(cam, corners[0]), cam, out slotMin))
-            return;
-
-        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, RectTransformUtility.WorldToScreenPoint(cam, corners[2]), cam, out slotMax))
-            return;
-
-        Vector2 size = target.rect.size;
-        Vector2 pivot = target.pivot;//浮窗的 pivot 在左上角，所以位置要按左边缘算
-        Vector2 canvasSize = canvasRect.sizeDelta;
-
-        float left = slotMax.x + gap - shiftLeft;//元素左边缘
-        if (left + size.x > canvasSize.x * 0.5f)//右边放不下就翻到左边
-            left = slotMin.x - gap - size.x;
-
-        float top = (slotMin.y + slotMax.y) * 0.5f + size.y * 0.5f;//元素顶边（与格子垂直居中）
-
-        float clampedLeft = Mathf.Clamp(left, -canvasSize.x * 0.5f, canvasSize.x * 0.5f - size.x);
-        float clampedTop = Mathf.Clamp(top, -canvasSize.y * 0.5f + size.y, canvasSize.y * 0.5f);
-
-        target.anchoredPosition = new Vector2(
-            clampedLeft + pivot.x * size.x,
-            clampedTop - (1f - pivot.y) * size.y);
-    }
+    //�?target 摆在格子旁边：优先右侧，右边放不下就放左侧；垂直居中于格子；shiftLeft 让它再往左挪一�?
 
     private void ApplyFontToAll()//统一字体
     {
@@ -451,7 +457,7 @@ public class UI_Inventory : MonoBehaviour
             text.ForceMeshUpdate(true, true);
     }
 
-    private static void SetGroup(CanvasGroup group, bool visible)//用透明度显隐，避免反复销毁重建网格
+    private static void SetGroup(CanvasGroup group, bool visible)//用透明度显隐，避免反复销毁重建网�?
     {
         if (group == null)
             return;
@@ -460,4 +466,21 @@ public class UI_Inventory : MonoBehaviour
         group.blocksRaycasts = visible;
         group.interactable = visible;
     }
+
+    private void PlaceBesideSlot(RectTransform target, RectTransform slotRect, float gap, float shiftLeft)
+    {
+        if (canvas == null)
+            return;
+
+        RectTransform canvasRect = canvas.GetComponent<RectTransform>();
+        Camera cam = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+
+        TooltipLayout.PlaceBeside(canvasRect, cam, target, slotRect, gap, shiftLeft);//pure layout math lives there
+    }
+
 }
+
+
+
+
+

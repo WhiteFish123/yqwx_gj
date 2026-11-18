@@ -1,22 +1,22 @@
 using System.Collections;
 using UnityEngine;
 
-// 格子移动"引擎"：只提供能力，不做决定。
+// 格子移动"引擎"：只提供能力，不做决定�?
 //
-// 和以前的区别：以前这个脚本自己在 Update 里读输入、自己决定走/抓/推；
+// 和以前的区别：以前这个脚本自己在 Update 里读输入、自己决定走/�?推；
 // 现在这些决定全部交给 PlayerBrain 的状态机（Idle / Move / Attack / Interact），
-// 它只负责把"走一格""推一格"这些动作平滑播完。
+// 它只负责�?走一�?"推一�?这些动作平滑播完�?
 //
-// ★ 推拉箱子的规则完全复用学长的 ChestPushPullRules，这里一行判定逻辑都没有重写。
+// �?推拉箱子的规则完全复用学长的 ChestPushPullRules，这里一行判定逻辑都没有重写�?
 public class PlayerGridMove : MonoBehaviour
 {
-    [SerializeField] private Grid grid;//所在网格，留空则自动查找
+    [SerializeField] private Grid grid;//所在网格，留空则自动查�?
     [SerializeField] private float moveDuration = 0.15f;//每格移动用时
-    [SerializeField] private float pushPullDuration = 0.3f;//推拉箱子一格用时（比走路慢，动画速率会按比例降低）
+    [SerializeField] private float pushPullDuration = 0.3f;//推拉箱子一格用时（比走路慢，动画速率会按比例降低�?
     [SerializeField] private LayerMask blockingMask;//阻挡层（格子内有这些层的碰撞体时不能走进去）
 
     private Vector3Int cell;//当前所在格
-    private bool isMoving;//移动协程进行中
+    private bool isMoving;//移动协程进行�?
     private Chest grabbedChest;//抓住的箱子，null 表示没抓
 
     public Vector2Int Facing { get; set; } = Vector2Int.down;//朝向（由状态在移动前设置）
@@ -24,10 +24,12 @@ public class PlayerGridMove : MonoBehaviour
     public bool IsMoving => isMoving;//是否正在跨格
     public bool IsGrabbing => grabbedChest != null;//是否抓着箱子
 
-    //推拉时相对走路的移动速度比例（1 = 一样快，0.5 = 慢一半）。
-    //给动画用：推拉比走路慢，动画播放速率跟着按比例降低。
+    //推拉时相对走路的移动速度比例�? = 一样快�?.5 = 慢一半）�?
+    //给动画用：推拉比走路慢，动画播放速率跟着按比例降低�?
     public float PushPullSpeedScale =>
         pushPullDuration > 0.001f ? Mathf.Clamp01(moveDuration / pushPullDuration) : 1f;
+
+    private GridPassability passability;//所在 Grid 的区域表，跨房间时同步换
 
     private void Start()
     {
@@ -36,10 +38,18 @@ public class PlayerGridMove : MonoBehaviour
 
         if (grid != null)
             cell = grid.WorldToCell(transform.position);
+
+        RefreshPassability();
     }
 
-    //一个场景里有多个 Grid（每个房间一个），取离玩家最近的那个，
-    //否则默认会拿到主房间的 Grid，算出来的格子坐标会差几十格。
+    //区域表跟着当前 Grid 走：多房间场景里每个房间一份
+    private void RefreshPassability()
+    {
+        passability = grid != null ? grid.GetComponent<GridPassability>() : null;
+    }
+
+    //一个场景里有多�?Grid（每个房间一个），取离玩家最近的那个�?
+    //否则默认会拿到主房间�?Grid，算出来的格子坐标会差几十格�?
     private Grid FindNearestGrid()
     {
         Grid[] grids = FindObjectsByType<Grid>(FindObjectsSortMode.None);
@@ -62,9 +72,9 @@ public class PlayerGridMove : MonoBehaviour
         return nearest;
     }
 
-    // ===== 下面这些是给状态机调用的"能力" =====
+    // ===== 下面这些是给状态机调用�?能力" =====
 
-    //尝试朝 direction 走一格；返回 true 表示真的迈出去了（会在 moveDuration 内走完）
+    //尝试�?direction 走一格；返回 true 表示真的迈出去了（会�?moveDuration 内走完）
     public bool TryWalk(Vector2Int direction)
     {
         if (isMoving || grid == null || direction == Vector2Int.zero)
@@ -83,36 +93,41 @@ public class PlayerGridMove : MonoBehaviour
 
         if (!IsWalkable(target))
         {
-            //撞到的是传送门就走黑幕传送，不当成"走不动"
-            TeleportDoor door = TeleportDoor.At(new Vector2Int(target.x, target.y));
+            //撞到的是传送门就走黑幕传送，不当�?走不�?
+            TeleportDoor door = TeleportDoor.At(grid, new Vector2Int(target.x, target.y));
             if (door != null)
                 door.Activate(this);
 
             return false;
         }
 
+        if (passability != null && !passability.CanWalk(cell, direction))
+            return false;//楼梯侧面、跨楼层这类“这一步不允许”的边
+
         StartCoroutine(MoveRoutine(target));
         return true;
     }
 
-    //设置朝向（零向量忽略）。抓箱子期间不会被移动改写，推拉方向才稳定。
+    //设置朝向（零向量忽略）。抓箱子期间不会被移动改写，推拉方向才稳定�?
     public void SetFacing(Vector2Int direction)
     {
         if (direction != Vector2Int.zero)
             Facing = direction;
     }
 
-    //切换所在网格：跨房间传送后必须换到目标房间的 Grid，
-    //否则 GetCellCenterWorld 会按旧 Grid 的偏移算出错误的世界坐标。
+    //切换所在网格：跨房间传送后必须换到目标房间�?Grid�?
+    //否则 GetCellCenterWorld 会按�?Grid 的偏移算出错误的世界坐标�?
     public void SetGrid(Grid newGrid)
     {
         if (newGrid != null)
             grid = newGrid;
+
+        RefreshPassability();
     }
 
-    //瞬移：把玩家直接放到某一格的中心。
-    //★ 一定要在这里同步 cell，否则内部记录的还是旧格子，
-    //  下一次走路会从旧格子算方向，人就会往莫名其妙的地方迈。
+    //瞬移：把玩家直接放到某一格的中心�?
+    //�?一定要在这里同�?cell，否则内部记录的还是旧格子，
+    //  下一次走路会从旧格子算方向，人就会往莫名其妙的地方迈�?
     public void TeleportTo(Vector3Int targetCell)
     {
         StopAllCoroutines();//万一正在跨格，先打断
@@ -124,7 +139,7 @@ public class PlayerGridMove : MonoBehaviour
             transform.position = grid.GetCellCenterWorld(targetCell);
     }
 
-    //抓住正前方相邻格的箱子
+    //抓住正前方相邻格的箱�?
     public bool TryGrab()
     {
         if (isMoving || grabbedChest != null || grid == null)
@@ -132,6 +147,9 @@ public class PlayerGridMove : MonoBehaviour
 
         Vector2Int playerCell = new Vector2Int(cell.x, cell.y);
         Chest chest = Chest.At(playerCell + Facing);
+
+        if (chest != null && chest.IsBusy)//a chest in mid-air cannot be grabbed
+            return false;
 
         if (!ChestPushPullRules.CanGrab(playerCell, Facing, chest != null))
             return false;
@@ -145,10 +163,10 @@ public class PlayerGridMove : MonoBehaviour
         grabbedChest = null;
     }
 
-    //朝向方向推、反方向拉（判定与目标格计算全部来自学长的 ChestPushPullRules）
+    //朝向方向推、反方向拉（判定与目标格计算全部来自学长�?ChestPushPullRules�?
     public bool TryPushOrPull(Vector2Int direction)
     {
-        if (isMoving || grabbedChest == null || grid == null)
+        if (isMoving || grabbedChest == null || grabbedChest.IsBusy || grid == null)
             return false;
 
         ChestMoveKind kind = ChestPushPullRules.Resolve(Facing, direction);
@@ -157,12 +175,16 @@ public class PlayerGridMove : MonoBehaviour
 
         Vector2Int playerCell = new Vector2Int(cell.x, cell.y);
 
+        if (!ChestPushPullRules.TryComputeTargets(playerCell, grabbedChest.Cell, Facing, kind,
+                out Vector2Int playerTarget, out Vector2Int chestTarget))
+            return false;
+
+        if (!CanChestMove(playerCell, playerTarget, chestTarget))
+            return false;
+
         if (!ChestPushPullRules.CanExecute(playerCell, grabbedChest.Cell, Facing, kind,
                 IsCellBlocked, HasOtherChest))
             return false;
-
-        ChestPushPullRules.TryComputeTargets(playerCell, grabbedChest.Cell, Facing, kind,
-            out Vector2Int playerTarget, out Vector2Int chestTarget);
 
         StartCoroutine(MoveBothRoutine(playerTarget, grabbedChest, chestTarget));
         return true;
@@ -170,7 +192,7 @@ public class PlayerGridMove : MonoBehaviour
 
     // ===== 内部工具 =====
 
-    private bool IsCellBlocked(Vector2Int target)//墙体/敌人占用，口径与 IsBlocked 一致
+    private bool IsCellBlocked(Vector2Int target)//墙体/敌人占用，口径与 IsBlocked 一�?
     {
         return IsBlocked(new Vector3Int(target.x, target.y, cell.z));
     }
@@ -181,7 +203,7 @@ public class PlayerGridMove : MonoBehaviour
         return chest != null && chest != grabbedChest;
     }
 
-    private bool IsWalkable(Vector3Int target)//墙、敌人、箱子都不能进
+    private bool IsWalkable(Vector3Int target)//墙、敌人、箱子都不能�?
     {
         if (IsBlocked(target))
             return false;
@@ -200,7 +222,7 @@ public class PlayerGridMove : MonoBehaviour
                 return true;
         }
 
-        foreach (Enemy enemy in FindObjectsByType<Enemy>(FindObjectsSortMode.None))//敌人所在格不能进
+        foreach (Enemy enemy in FindObjectsByType<Enemy>(FindObjectsSortMode.None))//敌人所在格不能�?
         {
             if (enemy == null || enemy.isDead)
                 continue;
@@ -232,12 +254,30 @@ public class PlayerGridMove : MonoBehaviour
         isMoving = false;
     }
 
-    private IEnumerator MoveBothRoutine(Vector2Int playerTarget, Chest chest, Vector2Int chestTarget)//玩家与箱子同步移动一格
+    //推拉时：箱子那一格按“推”的规则判（允许往下推），玩家自己那一格按“走”的规则判
+    private bool CanChestMove(Vector2Int playerCell, Vector2Int playerTarget, Vector2Int chestTarget)
+    {
+        if (passability == null)
+            return true;
+
+        Vector3Int chestFrom = new Vector3Int(grabbedChest.Cell.x, grabbedChest.Cell.y, cell.z);
+        Vector3Int chestTo = new Vector3Int(chestTarget.x, chestTarget.y, cell.z);
+
+        if (!passability.CanChestEnter(chestFrom, chestTo))
+            return false;
+
+        Vector2Int playerStep = playerTarget - playerCell;
+
+        return playerStep == Vector2Int.zero || passability.CanWalk(cell, playerStep);
+    }
+
+    private IEnumerator MoveBothRoutine(Vector2Int playerTarget, Chest chest, Vector2Int chestTarget)//玩家与箱子同步移动一�?
     {
         isMoving = true;
 
         bool wasOnSecondFloor = chest.IsSecondFloorCell(chest.Cell);//记下推动前箱子是否在二楼
         bool willBeOnSecondFloor = chest.IsSecondFloorCell(chestTarget);
+        Vector2Int pushDir = chestTarget - new Vector2Int(chest.Cell.x, chest.Cell.y);//推动方向（掉落伤害矩形按它摆�?
 
         Vector3Int targetCell = new Vector3Int(playerTarget.x, playerTarget.y, cell.z);
         Vector3 playerStart = transform.position;
@@ -260,13 +300,16 @@ public class PlayerGridMove : MonoBehaviour
         if (!wasOnSecondFloor || willBeOnSecondFloor)//没从二楼推出去，正常结束
             yield break;
 
-        while (chest.IsMoving)//等箱子横向到位
+        while (chest.IsMoving)//等箱子横向到�?
             yield return null;
 
         ReleaseGrab();//箱子被推出边缘，玩家松手
 
         Vector2Int landing = chest.FindLandingCell();
         if (landing != chest.Cell)
+        {
+            chest.SetFallPushDirection(pushDir);
             chest.FallTo(landing);
+        }
     }
 }

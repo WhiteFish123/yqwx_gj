@@ -8,11 +8,14 @@ public class GridPathfinder
     private readonly LayerMask obstacleMask;//障碍物层
     private readonly int maxNodes;//最多扩展节点数，防止无限搜索
 
+    private readonly GridPassability passability;//所在网格的通行规则，没配则为 null
+
     public GridPathfinder(Grid grid, LayerMask obstacleMask, int maxNodes = 400)
     {
         this.grid = grid;
         this.obstacleMask = obstacleMask;
         this.maxNodes = maxNodes;
+        this.passability = grid != null ? grid.GetComponent<GridPassability>() : null;
     }
 
     //格子中心是否有障碍物
@@ -72,6 +75,10 @@ public class GridPathfinder
             {
                 if (closed.Contains(next) || IsBlocked(next))
                     continue;
+
+                if (passability != null &&
+                    !passability.CanWalk(current, new Vector2Int(next.x - current.x, next.y - current.y)))
+                    continue;//楼梯侧面、跨楼层这类“这一步不允许”的边
 
                 int tentative = gScore[current] + 1;
 

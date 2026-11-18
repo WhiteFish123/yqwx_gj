@@ -1,41 +1,42 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 //敌人基类
-public class Enemy : MonoBehaviour, IDamageable
+public class Enemy : MonoBehaviour, IDamageable, INoiseListener
 {
     public Animator anim { get; private set; }//动画组件（位于子对象上）
-    public SpriteRenderer spriteRenderer { get; private set; }//精灵渲染器（位于子对象上）
+    public SpriteRenderer spriteRenderer { get; private set; }//精灵渲染器（位于子对象上�?
     public Rigidbody2D rb { get; private set; }//刚体
     public StateMachine stateMachine { get; private set; }//状态机实例
 
-    public Enemy_IdleState idleState;//待机状态
-    public Enemy_MoveState moveState;//巡逻移动状态
-    public Enemy_ChaseState chaseState;//追逐状态
-    public Enemy_AttackState attackState;//攻击冲刺状态
-    public Enemy_ReturnState returnState;//返回巡逻状态
-    public Enemy_DeadState deadState;//死亡状态
-    public Enemy_InvestigateState investigateState;//调查声音状态（听到噪音时前往查看）
+    public Enemy_IdleState idleState;//待机状�?
+    public Enemy_MoveState moveState;//巡逻移动状�?
+    public Enemy_ChaseState chaseState;//追逐状�?
+    public Enemy_AttackState attackState;//攻击冲刺状�?
+    public Enemy_ReturnState returnState;//返回巡逻状�?
+    public Enemy_DeadState deadState;//死亡状�?
+    public Enemy_InvestigateState investigateState;//调查声音状态（听到噪音时前往查看�?
 
     [Header("Health")]
-    [SerializeField] protected float maxHealth = 1f;//最大生命值
-    public float currentHealth { get; private set; }//当前生命值
+    [SerializeField] protected float maxHealth = 1f;//最大生命�?
+    public float currentHealth { get; private set; }//当前生命�?
     public bool isDead { get; private set; }//是否已经死亡
 
     [Header("Patrol")]
-    public float moveDuration = 0.5f;//巡逻时走一格用时
+    public float moveDuration = 0.5f;//巡逻时走一格用�?
     public float idleTime = 2f;//待机时长
-    public PatrolRoute patrolRoute;//巡逻路线
+    public PatrolRoute patrolRoute;//巡逻路�?
     public List<Vector3> patrolPoints { get; set; }//巡逻路线点
     public bool patrolIsLoop { get; private set; }//路线是否首尾相连
 
     [Header("AI")]
-    public Grid grid;//所在网格，留空则自动查找
+    public Grid grid;//所在网格，留空则自动查�?
     public LayerMask obstacleMask;//障碍物层
-    public float chaseDuration = 0.22f;//追逐时走一格用时
+    public float chaseDuration = 0.22f;//追逐时走一格用�?
 
     [Header("听觉")]
-    public float investigateDuration = 0.3f;//调查噪音时走一格用时（比巡逻快、比追逐慢）
+    public float investigateDuration = 0.3f;//调查噪音时走一格用时（比巡逻快、比追逐慢�?
     public Vector3Int? heardCell { get; private set; }//最近听到声音所在的格，null 表示没有
 
     [Header("Attack")]
@@ -43,18 +44,36 @@ public class Enemy : MonoBehaviour, IDamageable
     public int attackDashCells = 3;//冲刺格数
     public float attackWindupDelay = 0.083f;//起手到第二帧的时间（12fps，约 1/12 秒）
     public float attackHoldTime = 0.1f;//到第二帧后原地停顿的时长
-    public float attackDashDuration = 0.1f;//冲刺时走一格用时
+    public float attackDashDuration = 0.1f;//冲刺时走一格用�?
     public float attackAnimLength = 0.42f;//攻击动画时长，冲刺早了要等它播完
     public float attackCooldown = 0.2f;//攻击结束后的冷却时间
-    public float nextAttackTime { get; private set; }//下次可攻击的时间点
+    public float nextAttackTime { get; private set; }//下次可攻击的时间�?
     public EnemyVision vision { get; private set; }//视野
     public GridPathfinder pathfinder { get; private set; }//寻路
     public GameObject trailEffect { get; private set; }//冲刺拖尾特效对象
-    public float trailOffset = 0.45f;//拖尾相对身体后方的偏移距离
+    public float trailOffset = 0.45f;//拖尾相对身体后方的偏移距�?
     public Vector2Int facing { get; private set; } = Vector2Int.right;//四向朝向
 
     [Header("Rendering")]
     public bool invertSpriteFlip;//素材默认朝左的敌人勾上，把左右翻向反过来
+
+    protected virtual void OnEnable()//register so other enemies can query occupancy without FindObjectsByType
+    {
+        EnemyRegistry.Register(this);
+        NoiseSystem.Register(this);
+    }
+
+    protected virtual void OnDisable()
+    {
+        EnemyRegistry.Unregister(this);
+        NoiseSystem.Unregister(this);
+    }
+
+    private void OnDestroy()
+    {
+        EnemyRegistry.Unregister(this);
+        NoiseSystem.Unregister(this);
+    }
 
     protected virtual void Awake()//获取组件
     {
@@ -74,6 +93,13 @@ public class Enemy : MonoBehaviour, IDamageable
 
         if (grid == null)
             grid = FindFirstObjectByType<Grid>();
+
+        if (secondFloorTilemap == null && grid != null)
+        {
+            Transform floor = grid.transform.Find("SecondFloor");
+            if (floor != null)
+                secondFloorTilemap = floor.GetComponent<Tilemap>();
+        }
     }
 
     protected virtual void Start()//构建视野与寻路（需在网格解析之后）
@@ -87,7 +113,7 @@ public class Enemy : MonoBehaviour, IDamageable
         stateMachine.UpdateActiveState();
 
 #if UNITY_EDITOR
-        if (Input.GetKeyDown(KeyCode.P))//调试：按 P 直接杀死敌人
+        if (Input.GetKeyDown(KeyCode.P))//调试：按 P 直接杀死敌�?
             TakeDamage(maxHealth);
 #endif
     }
@@ -106,7 +132,7 @@ public class Enemy : MonoBehaviour, IDamageable
         }
     }
 
-    //刀 / 枪 / 铁球都通过这个接口打过来，统一转成 TakeDamage
+    //刀 / �?/ 铁球都通过这个接口打过来，统一转成 TakeDamage
     public virtual void TakeHit(HitInfo info)
     {
         TakeDamage(info.damage);
@@ -117,7 +143,7 @@ public class Enemy : MonoBehaviour, IDamageable
         if (isDead)
             return;
 
-        if (deadState == null)//没配死亡状态：报错并保持可受伤状态，避免变成杀不死的僵尸
+        if (deadState == null)//没配死亡状态：报错并保持可受伤状态，避免变成杀不死的僵�?
         {
             Debug.LogError("敌人未配置死亡状态：" + name);
             return;
@@ -125,7 +151,7 @@ public class Enemy : MonoBehaviour, IDamageable
 
         isDead = true;
 
-        if (!stateMachine.ChangeState(deadState))//状态机未初始化或已锁死：回滚死亡标记
+        if (!stateMachine.ChangeState(deadState))//状态机未初始化或已锁死：回滚死亡标�?
             isDead = false;
     }
 
@@ -156,7 +182,7 @@ public class Enemy : MonoBehaviour, IDamageable
         return true;
     }
 
-    public Vector3Int WorldToCell(Vector3 world)//世界坐标转格子坐标
+    public Vector3Int WorldToCell(Vector3 world)//世界坐标转格子坐�?
     {
         return grid == null ? Vector3Int.zero : grid.WorldToCell(world);
     }
@@ -166,14 +192,14 @@ public class Enemy : MonoBehaviour, IDamageable
         return grid == null ? Vector3.zero : grid.GetCellCenterWorld(cell);
     }
 
-    public void SetFacing(Vector2Int direction)//更新四向朝向（零向量忽略）
+    public void SetFacing(Vector2Int direction)//更新四向朝向（零向量忽略�?
     {
         if (direction == Vector2Int.zero)
             return;
 
         facing = direction;
 
-        if (trailEffect != null)//拖尾特效保持在身体背面；上下移动时整体转 90 度
+        if (trailEffect != null)//拖尾特效保持在身体背面；上下移动时整体转 90 �?
         {
             trailEffect.transform.localPosition = new Vector3(-direction.x * trailOffset, -direction.y * trailOffset, 0f);
 
@@ -182,7 +208,7 @@ public class Enemy : MonoBehaviour, IDamageable
 
             SpriteRenderer trailSprite = trailEffect.GetComponent<SpriteRenderer>();
             if (trailSprite != null)
-                trailSprite.flipX = direction.x != 0 ? direction.x > 0 : direction.y > 0;//让浓的一端朝向身体
+                trailSprite.flipX = direction.x != 0 ? direction.x > 0 : direction.y > 0;//让浓的一端朝向身�?
         }
 
         if (spriteRenderer == null)
@@ -190,6 +216,26 @@ public class Enemy : MonoBehaviour, IDamageable
 
         if (direction.x != 0)//横向朝向才翻转；勾了 invertSpriteFlip 说明素材默认朝左
             spriteRenderer.flipX = invertSpriteFlip ? direction.x > 0 : direction.x < 0;
+        else
+            spriteRenderer.flipX = false;//facing up/down use front art, never mirror it
+    }
+
+    //动画名解析钩子：子类可以按朝向等情况把基名换成别�?clip（默认原样返回）
+    public virtual string ResolveAnimName(string baseName) => baseName;
+
+    // ===== 楼层：SecondFloor 有瓦片的格子算二楼，其余算一�?=====
+    //敌人不能跨楼层移�?冲撞，否则会从一楼侧�?�?到二�?
+
+    public Tilemap secondFloorTilemap { get; private set; }//二楼地面，Awake 时从 Grid 下自动找
+
+    public int FloorOf(Vector3Int cell)//该格属于几楼
+    {
+        return FloorQuery.FloorOf(secondFloorTilemap, cell);//single source of truth
+    }
+
+    public bool SameFloor(Vector3Int a, Vector3Int b)//两个格子是否在同一�?
+    {
+        return FloorOf(a) == FloorOf(b);
     }
 
     public bool CanSeePlayer()//玩家是否在视野内
@@ -206,17 +252,17 @@ public class Enemy : MonoBehaviour, IDamageable
         return visible.Contains(new Vector2Int(playerCell.x, playerCell.y));
     }
 
-    public virtual bool CanDetectPlayer()//玩家是否被察觉（史莱姆：3 排宽视野；石像鬼：正前方直线）
+    public virtual bool CanDetectPlayer()//玩家是否被察觉（史莱姆：3 排宽视野；石像鬼：正前方直线�?
     {
         return CanSeePlayer();
     }
 
-    public virtual EnemyState GetAlertState()//察觉玩家后要进入的状态（史莱姆：追逐；石像鬼：蓄力）
+    public virtual EnemyState GetAlertState()//察觉玩家后要进入的状态（史莱姆：追逐；石像鬼：蓄力�?
     {
         return chaseState;
     }
 
-    public virtual bool IsBusy()//是否处于不可被噪音打断的状态
+    public virtual bool IsBusy()//是否处于不可被噪音打断的状�?
     {
         return attackState != null && stateMachine.currentState == attackState;
     }
@@ -268,20 +314,10 @@ public class Enemy : MonoBehaviour, IDamageable
         if (pathfinder != null && pathfinder.IsBlocked(cell))
             return true;
 
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null && WorldToCell(player.transform.position) == cell)
+        if (EnemyRegistry.IsOccupiedByPlayer(cell, WorldToCell))//cached player lookup, no per-frame Find
             return true;
 
-        foreach (Enemy other in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
-        {
-            if (other == this || other.isDead)
-                continue;
-
-            if (other.WorldToCell(other.transform.position) == cell)
-                return true;
-        }
-
-        return false;
+        return EnemyRegistry.IsOccupiedByOther(this, cell);//registry scan, no array allocation
     }
 
     public bool CanAttack()//冷却是否结束
@@ -289,15 +325,15 @@ public class Enemy : MonoBehaviour, IDamageable
         return Time.time >= nextAttackTime;
     }
 
-    public void BeginAttackCooldown()//攻击结束后开始冷却
+    public void BeginAttackCooldown()//攻击结束后开始冷�?
     {
         nextAttackTime = Time.time + attackCooldown;
     }
 
     // ===== 听觉：被噪音吸引 =====
 
-    //听到声音：记下声音所在格，并进入"调查"状态走过去看看。
-    //由 NoiseBroadcast（见下方 BroadcastNoise）在开枪等事件时统一调用。
+    //听到声音：记下声音所在格，并进入"调查"状态走过去看看�?
+    //�?NoiseBroadcast（见下方 BroadcastNoise）在开枪等事件时统一调用�?
     public void HearNoise(Vector3 worldPosition)
     {
         if (isDead || investigateState == null)
@@ -307,40 +343,37 @@ public class Enemy : MonoBehaviour, IDamageable
         if (IsBusy())
             return;
 
-        //已经看见玩家时不需要"去查看"，继续追就行
+        //已经看见玩家时不需�?去查�?，继续追就行
         if (chaseState != null && stateMachine.currentState == chaseState && CanSeePlayer())
             return;
 
         heardCell = WorldToCell(worldPosition);
 
-        //已经在调查时 ChangeState 会返回 false（同状态不切换），
-        //但调查状态每帧都读 heardCell，所以目标会自动改成新位置。
+        //已经在调查时 ChangeState 会返�?false（同状态不切换），
+        //但调查状态每帧都�?heardCell，所以目标会自动改成新位置�?
         stateMachine.ChangeState(investigateState);
     }
 
-    public void ClearHeardCell()//调查结束，忘掉这次声音
+    public void ClearHeardCell()//调查结束，忘掉这次声�?
     {
         heardCell = null;
     }
 
-    //噪声广播：让半径内所有活着的敌人前往 position 查看。
-    //枪声、砸东西、爆炸都可以调它；声音穿墙（不做视线检查），这也符合"听觉"的直觉。
+    //噪声广播：让半径内所有活着的敌人前往 position 查看�?
+    //枪声、砸东西、爆炸都可以调它；声音穿墙（不做视线检查），这也符�?听觉"的直觉�?
+    //�����㲥���ð뾶�����л��ŵĵ���ǰ�� position �鿴��ʵ�ּ� NoiseSystem��
+    //ǹ�����Ҷ�������ը�����Ե�����������ǽ���������߼�飩������"����"��ֱ��
     public static void BroadcastNoise(Vector3 position, float radius)
     {
-        if (radius <= 0f)
-            return;
+        NoiseSystem.Broadcast(position, radius);
+    }
 
-        float sqrRadius = radius * radius;
+    //INoiseListener�����Լ����� NoiseSystem������ÿ�ι㲥�� FindObjectsByType
+    public Vector3 NoisePosition => transform.position;
 
-        foreach (Enemy enemy in FindObjectsByType<Enemy>(FindObjectsSortMode.None))
-        {
-            if (enemy == null || enemy.isDead)
-                continue;
-
-            if ((enemy.transform.position - position).sqrMagnitude > sqrRadius)
-                continue;
-
-            enemy.HearNoise(position);
-        }
+    public void OnHeardNoise(Vector3 worldPosition)
+    {
+        HearNoise(worldPosition);
     }
 }
+

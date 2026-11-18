@@ -4,8 +4,8 @@ using UnityEngine;
 //逐格移动基类：RPG Maker 风格，格与格之间平滑插值，不使用物理速度
 public abstract class Enemy_PathMoveState : EnemyState
 {
-    private Vector3 stepFrom;//本步起点（格中心）
-    private Vector3 stepTo;//本步终点（格中心）
+    private Vector3 stepFrom;//本步起点（格中心�?
+    private Vector3 stepTo;//本步终点（格中心�?
     private float progress;//本步进度 0~1
     private bool isStepping;//是否正在跨格
 
@@ -14,7 +14,7 @@ public abstract class Enemy_PathMoveState : EnemyState
     {
     }
 
-    protected abstract float StepDuration { get; }//每走一格用时
+    protected abstract float StepDuration { get; }//每走一格用�?
 
     protected abstract Vector3Int? GetTargetCell();//目标格，null 表示没有目标
 
@@ -23,11 +23,11 @@ public abstract class Enemy_PathMoveState : EnemyState
         return false;
     }
 
-    protected virtual void OnArrived()//已在目标格
+    protected virtual void OnArrived()//已在目标�?
     {
     }
 
-    protected virtual void OnNoTarget()//没有目标或走不过去
+    protected virtual void OnNoTarget()//没有目标或走不过�?
     {
     }
 
@@ -57,7 +57,7 @@ public abstract class Enemy_PathMoveState : EnemyState
             return;
         }
 
-        if (isStepping)//跨格中：只做插值，不重新决策
+        if (isStepping)//跨格中：只做插值，不重新决�?
         {
             progress += Time.deltaTime / Mathf.Max(0.01f, StepDuration);
             enemy.transform.position = Vector3.Lerp(stepFrom, stepTo, Mathf.Clamp01(progress));
@@ -88,21 +88,27 @@ public abstract class Enemy_PathMoveState : EnemyState
         }
 
         List<Vector3Int> path = enemy.pathfinder.FindPath(current, target.Value);
-        if (path == null || path.Count < 2)//不可达
+        if (path == null || path.Count < 2)//不可�?
         {
             OnNoTarget();
             return;
         }
 
-        Vector3Int next = path[1];//永远走"下一格"
+        Vector3Int next = path[1];//永远�?下一�?
 
+
+        if (!enemy.SameFloor(current, next))//cannot walk across floors (e.g. ground -> second floor)
+        {
+            OnNoTarget();
+            return;
+        }
         if (enemy.IsCellOccupied(next))//被玩家或别的敌人占着，等它让开
             return;
 
         BeginStep(current, next);
     }
 
-    private void BeginStep(Vector3Int from, Vector3Int to)//开始跨一格
+    private void BeginStep(Vector3Int from, Vector3Int to)//开始跨一�?
     {
         stepFrom = enemy.CellToCenter(from);
         stepTo = enemy.CellToCenter(to);

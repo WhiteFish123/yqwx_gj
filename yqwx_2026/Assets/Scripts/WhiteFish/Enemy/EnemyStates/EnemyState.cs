@@ -9,4 +9,7 @@ public class EnemyState : EntityState
     {
         this.enemy = enemy;
     }
+
+    //动画名交给敌人自己解析：不同朝向可以换不同的 clip
+    protected override string ResolveAnimName(string name) => enemy.ResolveAnimName(name);
 }

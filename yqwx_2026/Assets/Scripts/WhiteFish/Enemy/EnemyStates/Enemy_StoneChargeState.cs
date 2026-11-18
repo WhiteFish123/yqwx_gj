@@ -1,6 +1,6 @@
 using UnityEngine;
 
-//石像鬼的蓄力与冲撞：原地定格抖动蓄力，然后朝锁定方向逐格冲到底
+//石像鬼的蓄力与冲撞：原地定格抖动蓄力，然后朝锁定方向逐格冲到�?
 public class Enemy_StoneChargeState : EnemyState
 {
     private enum Phase
@@ -13,20 +13,20 @@ public class Enemy_StoneChargeState : EnemyState
 
     private Phase phase;//当前阶段
     private float chargeTimer;//蓄力剩余时间
-    private Vector3 baseCenter;//蓄力期间的基准位置（所在格中心）
+    private Vector3 baseCenter;//蓄力期间的基准位置（所在格中心�?
 
-    private Vector2Int direction;//锁定的冲撞方向
+    private Vector2Int direction;//锁定的冲撞方�?
     private Vector3 stepFrom;//本步起点
     private Vector3 stepTo;//本步终点
     private float progress;//本步进度
     private bool isStepping;//是否正在跨格
 
-    private int frameIndex;//当前冲刺帧下标
+    private int frameIndex;//当前冲刺帧下�?
     private float frameTimer;//当前帧已播放时间
-    private bool frameLooping;//首轮是否已播完
+    private bool frameLooping;//首轮是否已播�?
 
     public Enemy_StoneChargeState(Enemy_Stone stone, StateMachine stateMachine)
-        : base(stone, stateMachine, null)//不参与 bool 参数体系
+        : base(stone, stateMachine, null)//不参�?bool 参数体系
     {
         this.stone = stone;
     }
@@ -37,7 +37,7 @@ public class Enemy_StoneChargeState : EnemyState
 
         phase = Phase.Charge;
         chargeTimer = stone.chargeTime;
-        direction = enemy.facing;//方向锁定，蓄力期间玩家走开也不改
+        direction = enemy.facing;//方向锁定，蓄力期间玩家走开也不�?
 
         isStepping = false;
         progress = 0f;
@@ -55,17 +55,20 @@ public class Enemy_StoneChargeState : EnemyState
         if (anim != null)
             anim.enabled = false;//接管 sprite，蓄力期间定格在 holdFrame
 
-        if (enemy.spriteRenderer != null && stone.holdFrame != null)
-            enemy.spriteRenderer.sprite = stone.holdFrame;
+        if (enemy.spriteRenderer != null && stone.CurrentHoldFrame != null)
+            enemy.spriteRenderer.sprite = stone.CurrentHoldFrame;
     }
 
     public override void Exit()
     {
+        if (phase == Phase.Charge)
+            enemy.transform.position = baseCenter;//charge shakes off the cell center, snap back
+
         isStepping = false;
         progress = 0f;
 
         if (anim != null)
-            anim.enabled = true;//交还给 Animator，保证后续状态动画正常
+            anim.enabled = true;//交还�?Animator，保证后续状态动画正�?
 
         base.Exit();
     }
@@ -83,17 +86,17 @@ public class Enemy_StoneChargeState : EnemyState
         UpdateDash();
     }
 
-    private void UpdateCharge()//原地抖动等蓄力结束
+    private void UpdateCharge()//原地抖动等蓄力结�?
     {
         chargeTimer -= Time.deltaTime;
 
-        if (chargeTimer <= 0f)//蓄力结束：停止抖动、回归格中心、开冲
+        if (chargeTimer <= 0f)//蓄力结束：停止抖动、回归格中心、开�?
         {
             enemy.transform.position = baseCenter;
             phase = Phase.Dash;
             frameIndex = 0;
             frameTimer = 0f;
-            ApplyFrame();//立刻显示冲刺动画第一帧
+            ApplyFrame();//立刻显示冲刺动画第一�?
             return;
         }
 
@@ -123,9 +126,15 @@ public class Enemy_StoneChargeState : EnemyState
         Vector3Int current = enemy.WorldToCell(enemy.transform.position);
         Vector3Int next = current + new Vector3Int(direction.x, direction.y, 0);
 
-        if (enemy.CellHasObstacle(next))//撞墙：晕眩
+        if (enemy.CellHasObstacle(next))//撞墙：晕�?
         {
-            stateMachine.ChangeState(stone.stunnedState);
+            stateMachine.TryChangeState(stone.stunnedState, "StoneCharge(hit wall/cross floor)");
+            return;
+        }
+
+        if (!enemy.SameFloor(current, next))//跨楼层：当作撞墙，不能从一楼冲到二�?
+        {
+            stateMachine.TryChangeState(stone.stunnedState, "StoneCharge(hit wall/cross floor)");
             return;
         }
 
@@ -137,7 +146,7 @@ public class Enemy_StoneChargeState : EnemyState
             return;
         }
 
-        if (IsOtherEnemyAt(next))//撞到别的敌人：走回原位
+        if (IsOtherEnemyAt(next))//撞到别的敌人：走回原�?
         {
             stone.GoHome();
             return;
@@ -149,9 +158,9 @@ public class Enemy_StoneChargeState : EnemyState
         isStepping = true;
     }
 
-    private void AdvanceFrames()//按帧率推进冲刺动画
+    private void AdvanceFrames()//按帧率推进冲刺动�?
     {
-        Sprite[] frames = stone.attackFrames;
+        Sprite[] frames = stone.CurrentAttackFrames;
 
         if (frames == null || frames.Length == 0 || enemy.spriteRenderer == null)
             return;
@@ -170,7 +179,7 @@ public class Enemy_StoneChargeState : EnemyState
 
     private void ApplyFrame()//把当前帧写到渲染器上
     {
-        Sprite[] frames = stone.attackFrames;
+        Sprite[] frames = stone.CurrentAttackFrames;
 
         if (frames == null || frames.Length == 0 || enemy.spriteRenderer == null)
             return;
@@ -178,10 +187,19 @@ public class Enemy_StoneChargeState : EnemyState
         enemy.spriteRenderer.sprite = frames[Mathf.Clamp(frameIndex, 0, frames.Length - 1)];
     }
 
-    private int NextFrameIndex(int count)//首轮递增，之后在倒数第三帧与最后一帧之间来回
+    private int NextFrameIndex(int count)//首轮递增，之后在倒数第三帧与最后一帧之间来�?
     {
-        int loopStart = Mathf.Max(0, count - 3);//倒数第三帧（5 帧时是索引 2）
-        int last = count - 1;//最后一帧（5 帧时是索引 4）
+        int loopStart = Mathf.Max(0, count - 3);//倒数第三帧（5 帧时是索�?2�?
+        int last = count - 1;//最后一帧（5 帧时是索�?4�?
+
+        //no loop when facing down: play once and stop at the last frame
+        if (enemy.facing == Vector2Int.down && !stone.loopDownAttackFrames)
+        {
+            if (frameIndex < last)
+                return frameIndex + 1;
+
+            return last;
+        }
 
         if (frameLooping)
             return frameIndex == loopStart ? last : loopStart;
@@ -205,23 +223,13 @@ public class Enemy_StoneChargeState : EnemyState
             target.TakeEnemyHit(1);
     }
 
-    private bool IsPlayerAt(Vector3Int cell)//玩家是否站在该格
+    private bool IsPlayerAt(Vector3Int cell)//����Ƿ�վ�ڸø�
     {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        return player != null && enemy.WorldToCell(player.transform.position) == cell;
+        return EnemyRegistry.IsOccupiedByPlayer(cell, enemy.WorldToCell);//cached player, no per-step Find
     }
 
-    private bool IsOtherEnemyAt(Vector3Int cell)//该格是否被其他活着的敌人占着
+    private bool IsOtherEnemyAt(Vector3Int cell)//�ø��Ƿ��������ŵĵ���ռ��
     {
-        foreach (Enemy other in Object.FindObjectsByType<Enemy>(FindObjectsSortMode.None))
-        {
-            if (other == null || other == enemy || other.isDead)
-                continue;
-
-            if (other.WorldToCell(other.transform.position) == cell)
-                return true;
-        }
-
-        return false;
+        return EnemyRegistry.IsOccupiedByOther(enemy, cell);//registry, no array allocation per dash step
     }
 }

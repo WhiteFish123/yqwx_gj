@@ -2,9 +2,7 @@
     "name": "WhiteFish.Chest",
     "rootNamespace": "",
     "references": [
-        "WhiteFish.Combat",
-        "WhiteFish.Enemy"
-    ],
+        "WhiteFish.Combat"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

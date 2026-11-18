@@ -54,11 +54,14 @@ public abstract class EntityState
         anim.SetBool(animBoolName, value);
     }
 
+    //动画名解析钩子：子类可以按朝向等情况把基名换成别的 clip
+    protected virtual string ResolveAnimName(string name) => name;
+
     private void PlayAnim()//按名字直接播放，用于没有 bool 参数的 Animator Controller
     {
         if (anim == null || string.IsNullOrEmpty(animPlayName))
             return;
 
-        anim.Play(animPlayName);
+        anim.Play(ResolveAnimName(animPlayName));
     }
 }

@@ -1,14 +1,14 @@
 using UnityEngine;
 
-//攻击状态：起手播到第二帧后原地停顿，再高速冲刺，最后等攻击动画播完回到追逐
+//攻击状态：起手播到第二帧后原地停顿，再高速冲刺，最后等攻击动画播完回到追�?
 public class Enemy_AttackState : EnemyState
 {
     private enum Phase
     {
         Windup,//起手，播到第二帧
         Hold,//原地停顿
-        Dash,//高速冲刺
-        Recover//等剩余动画播完
+        Dash,//高速冲�?
+        Recover//等剩余动画播�?
     }
 
     private readonly string attackAnimName;//冲刺动画
@@ -24,10 +24,10 @@ public class Enemy_AttackState : EnemyState
     private float progress;//本步进度
     private bool isStepping;//是否正在跨格
 
-    private float elapsed;//攻击已进行时间
+    private float elapsed;//攻击已进行时�?
 
     public Enemy_AttackState(Enemy enemy, StateMachine stateMachine, string attackAnimName, string recoverAnimName)
-        : base(enemy, stateMachine, null)//攻击不参与 bool 参数体系
+        : base(enemy, stateMachine, null)//攻击不参�?bool 参数体系
     {
         this.attackAnimName = attackAnimName;
         this.recoverAnimName = recoverAnimName;
@@ -105,23 +105,23 @@ public class Enemy_AttackState : EnemyState
             return;
 
         if (anim != null)
-            anim.speed = 0f;//冻在第二帧
+            anim.speed = 0f;//冻在第二�?
 
         phase = Phase.Hold;
         phaseTimer = enemy.attackHoldTime;
     }
 
-    private void UpdateHold()//原地站住，时间到后恢复动画并开冲
+    private void UpdateHold()//原地站住，时间到后恢复动画并开�?
     {
         phaseTimer -= Time.deltaTime;
         if (phaseTimer > 0f)
             return;
 
         if (anim != null)
-            anim.speed = 1f;//继续播放剩下的动画
+            anim.speed = 1f;//继续播放剩下的动�?
 
         phase = Phase.Dash;
-        SetTrail(true);//冲刺阶段开启拖尾
+        SetTrail(true);//冲刺阶段开启拖�?
     }
 
     private void UpdateDash()//逐格冲刺
@@ -145,7 +145,7 @@ public class Enemy_AttackState : EnemyState
             return;
         }
 
-        if (cellsMoved >= enemy.attackDashCells)//冲满了
+        if (cellsMoved >= enemy.attackDashCells)//冲满�?
         {
             RequestFinish();
             return;
@@ -154,9 +154,15 @@ public class Enemy_AttackState : EnemyState
         Vector3Int current = enemy.WorldToCell(enemy.transform.position);
         Vector3Int next = current + new Vector3Int(direction.x, direction.y, 0);
 
+        if (!enemy.SameFloor(current, next))//dash cannot cross floors
+        {
+            RequestFinish();
+            return;
+        }
+
         if (enemy.IsCellOccupied(next))//前方被障碍、玩家或别的敌人挡住
         {
-            HurtPlayerAt(next);//如果挡住的是玩家 → 撞到了
+            HurtPlayerAt(next);//如果挡住的是玩家 �?撞到�?
             RequestFinish();
             return;
         }
@@ -167,9 +173,9 @@ public class Enemy_AttackState : EnemyState
         isStepping = true;
     }
 
-    private void RequestFinish()//冲刺结束：等动画补完再收尾
+    private void RequestFinish()//冲刺结束：等动画补完再收�?
     {
-        float expectedTotal = enemy.attackAnimLength + enemy.attackHoldTime;//停顿不计入动画时长
+        float expectedTotal = enemy.attackAnimLength + enemy.attackHoldTime;//停顿不计入动画时�?
         float remaining = expectedTotal - elapsed;
 
         if (remaining > 0.01f)
@@ -182,9 +188,9 @@ public class Enemy_AttackState : EnemyState
         Finish();
     }
 
-    private void Finish()//恢复移动动画并继续追逐
+    private void Finish()//恢复移动动画并继续追�?
     {
-        enemy.BeginAttackCooldown();//进入冷却，期间不会再次冲刺
+        enemy.BeginAttackCooldown();//进入冷却，期间不会再次冲�?
 
         if (anim != null)
             anim.speed = 1f;
@@ -194,18 +200,20 @@ public class Enemy_AttackState : EnemyState
         if (anim != null && !string.IsNullOrEmpty(recoverAnimName))
             anim.Play(recoverAnimName);
 
-        stateMachine.ChangeState(enemy.chaseState);
+        //some enemies (e.g. the stone gargoyle) have no chase state: fall back to idle
+        EntityState next = enemy.chaseState != null ? enemy.chaseState : enemy.idleState;
+        stateMachine.TryChangeState(next, "AttackState.Finish");
     }
 
-    private void SetTrail(bool on)//开关冲刺拖尾特效
+    private void SetTrail(bool on)//开关冲刺拖尾特�?
     {
         if (enemy.trailEffect == null)
             return;
 
-        enemy.trailEffect.SetActive(on);//激活时 Animator 会自动从头播放拖尾动画
+        enemy.trailEffect.SetActive(on);//激活时 Animator 会自动从头播放拖尾动�?
     }
 
-    //如果玩家站在这个格子上，说明冲刺撞到了他 → 扣一滴血
+    //如果玩家站在这个格子上，说明冲刺撞到了他 �?扣一滴血
     private void HurtPlayerAt(Vector3Int cell)
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");

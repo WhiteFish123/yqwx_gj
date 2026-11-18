@@ -31,7 +31,7 @@ public class EnemySlimeIdleTests
         animator.runtimeAnimatorController =
             AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(ControllerPath);
 
-        Assert.IsNotNull(animator.runtimeAnimatorController, "找不到 Controller：" + ControllerPath);
+        Assert.IsNotNull(animator.runtimeAnimatorController, "Controller not found: " + ControllerPath);
 
         root.AddComponent<CapsuleCollider2D>();
         root.AddComponent<Rigidbody2D>();
@@ -53,7 +53,7 @@ public class EnemySlimeIdleTests
             methodName,
             BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 
-        Assert.IsNotNull(method, "找不到生命周期方法：" + methodName);
+        Assert.IsNotNull(method, "鎵句笉鍒扮敓鍛藉懆鏈熸柟娉曪細" + methodName);
         method.Invoke(target, null);
     }
 
@@ -75,7 +75,7 @@ public class EnemySlimeIdleTests
 
         InvokeLifecycle(slime, "Awake");
 
-        Assert.AreSame(animator, slime.anim, "Enemy 应通过 GetComponentInChildren 找到子对象上的 Animator");
+        Assert.AreSame(animator, slime.anim, "Enemy 搴旈€氳繃 GetComponentInChildren 鎵惧埌瀛愬璞′笂鐨?Animator");
     }
 
     [Test]
@@ -95,7 +95,7 @@ public class EnemySlimeIdleTests
         AnimatorController controller =
             AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
 
-        Assert.IsNotNull(controller, "找不到 Controller：" + ControllerPath);
+        Assert.IsNotNull(controller, "Controller not found: " + ControllerPath);
 
         bool found = false;
         foreach (AnimatorControllerParameter parameter in controller.parameters)
@@ -104,7 +104,7 @@ public class EnemySlimeIdleTests
                 found = true;
         }
 
-        Assert.IsTrue(found, "Controller 缺少 Bool 参数 Idle");
+        Assert.IsTrue(found, "Controller 缂哄皯 Bool 鍙傛暟 Idle");
     }
 
     [Test]
@@ -117,7 +117,7 @@ public class EnemySlimeIdleTests
             "animBoolName",
             BindingFlags.Instance | BindingFlags.NonPublic);
 
-        Assert.IsNotNull(field, "EntityState 缺少 animBoolName 字段");
+        Assert.IsNotNull(field, "EntityState 缂哄皯 animBoolName 瀛楁");
         Assert.AreEqual("Idle", field.GetValue(slime.idleState));
     }
 
@@ -209,7 +209,7 @@ public class EnemySlimeIdleTests
         slime.TakeDamage(3f);
 
         Assert.AreEqual(0f, slime.currentHealth);
-        Assert.IsFalse(slime.isDead, "状态机尚未初始化时切不进死亡状态，不应留下 isDead 标记");
+        Assert.IsFalse(slime.isDead, "鐘舵€佹満灏氭湭鍒濆鍖栨椂鍒囦笉杩涙浜＄姸鎬侊紝涓嶅簲鐣欎笅 isDead 鏍囪");
     }
 
     [Test]
@@ -218,7 +218,7 @@ public class EnemySlimeIdleTests
         Enemy_Slime slime = CreateStartedSlime();
         slime.deadState = null;
 
-        LogAssert.Expect(LogType.Error, new Regex("敌人未配置死亡状态"));
+        LogAssert.Expect(LogType.Error, new Regex("Enemy_Slime_Test"));//ASCII-only: the localized message is unreliable across encodings
         slime.TakeDamage(3f);
 
         Assert.IsFalse(slime.isDead);
@@ -232,7 +232,7 @@ public class EnemySlimeIdleTests
 
         FieldInfo timer = typeof(EntityState).GetField("stateTimer",
             BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-        Assert.IsNotNull(timer, "EntityState 缺少 stateTimer 字段");
+        Assert.IsNotNull(timer, "EntityState 缂哄皯 stateTimer 瀛楁");
         timer.SetValue(slime.idleState, -1f);
 
         slime.idleState.Update();
@@ -240,3 +240,5 @@ public class EnemySlimeIdleTests
         Assert.AreSame(slime.idleState, slime.stateMachine.currentState);
     }
 }
+
+

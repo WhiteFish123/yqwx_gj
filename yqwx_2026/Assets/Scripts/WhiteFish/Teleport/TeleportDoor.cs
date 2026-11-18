@@ -16,7 +16,12 @@ public class TeleportDoor : MonoBehaviour
 
     [Header("目标")]
     [SerializeField] private TeleportPoint targetPoint;//落到哪个传送点
-    [SerializeField] private Grid targetGrid;//目标房间的 Grid，必须填
+
+    //目标房间的 Grid：运行时从传送点自动推导，不需要在 Inspector 里填。
+    //之前这个字段是手填的，填错了位置看着没错（WorldToCell/GetCellCenterWorld 往返可还原），
+    //但玩家会被 SetGrid 绑到错误的坐标空间——楼梯规则和箱子判定都按格子编号算，
+    //跨房间后会静默失效，而且没有任何报错。
+    private Grid targetGrid;
 
     [Header("节奏")]
     [SerializeField] private float fadeOutDuration = 0.35f;//渐黑用时
@@ -30,17 +35,51 @@ public class TeleportDoor : MonoBehaviour
     public Vector2Int Cell => cell;
     public TeleportPoint TargetPoint => targetPoint;
 
-    //查询某格上的传送门，没有则返回 null
-    public static TeleportDoor At(Vector2Int target)
+    //查询某格上的传送门，没有则返回 null。
+    //必须连 Grid 一起比：一个场景里多个房间各有自己的 Grid，格子编号会重复，
+    //只比格子编号的话会撞到别的房间的门上。
+    public static TeleportDoor At(Grid grid, Vector2Int target)
     {
+        if (grid == null)
+            return null;
+
         for (int i = 0; i < doors.Count; i++)
         {
             TeleportDoor door = doors[i];
-            if (door != null && door.cell == target)
+            if (door != null && door.grid == grid && door.cell == target)
                 return door;
         }
 
         return null;
+    }
+
+    //目标房间的 Grid 由传送点自己决定，不靠手填。
+    private Grid ResolveTargetGrid()
+    {
+        if (targetPoint == null)
+            return null;
+
+        //传送点如果挂在某个 Grid 下面，那个 Grid 就是目标房间
+        Grid parent = targetPoint.GetComponentInParent<Grid>();
+        if (parent != null)
+            return parent;
+
+        //传送点一般摆在场景根节点，只能按世界坐标挑最近的 Grid（和 PlayerGridMove 同一思路）
+        Grid[] grids = FindObjectsByType<Grid>(FindObjectsSortMode.None);
+        Grid nearest = null;
+        float best = float.MaxValue;
+
+        foreach (Grid candidate in grids)
+        {
+            float distance = (candidate.transform.position - targetPoint.transform.position).sqrMagnitude;
+            if (distance < best)
+            {
+                best = distance;
+                nearest = candidate;
+            }
+        }
+
+        return nearest;
     }
 
     private void Awake()
@@ -49,6 +88,13 @@ public class TeleportDoor : MonoBehaviour
             grid = GetComponentInParent<Grid>();
 
         Recalculate();
+
+        targetGrid = ResolveTargetGrid();
+
+        if (targetPoint == null)
+            Debug.LogWarning($"[TeleportDoor] {name} 没有配置 targetPoint，这扇门永远不会触发。", this);
+        else if (targetGrid == null)
+            Debug.LogWarning($"[TeleportDoor] {name} 找不到 targetPoint 所属的 Grid，这扇门无法传送。", this);
     }
 
     private void OnEnable()

@@ -146,19 +146,19 @@ public class TeleportTiles : MonoBehaviour
         return Vector2Int.zero;
     }
 
-    //玩家朝这块砖迈步时调用：只有 Enter 砖会触发，Exit 砖只是落点
+    //玩家朝这块砖迈步时调用：Enter 和 Exit 都触发，互为反向
     public void Activate(PlayerGridMove player, Kind from)
     {
         if (isTeleporting || player == null || partner == null)
             return;
 
-        if (from != Kind.Enter)
+        if (from == Kind.None)
             return;
 
-        StartCoroutine(TeleportRoutine(player));
+        StartCoroutine(TeleportRoutine(player, from));
     }
 
-    private IEnumerator TeleportRoutine(PlayerGridMove player)
+    private IEnumerator TeleportRoutine(PlayerGridMove player, Kind from)
     {
         isTeleporting = true;
 
@@ -168,7 +168,8 @@ public class TeleportTiles : MonoBehaviour
 
         yield return ScreenFader.Instance.FadeOut(fadeOutDuration);
 
-        Vector2Int landingCell = partner.FindLanding(Kind.Exit);//永远落到对方的 Exit
+        //Enter 去对方的 Exit，Exit 回对方的 Enter
+        Vector2Int landingCell = partner.FindLanding(OppositeOf(from));
 
         if (partner.Grid != null)
             player.SetGrid(partner.Grid);
