@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1 &4422822878424949041
 GameObject:
@@ -47,10 +47,14 @@ MonoBehaviour:
   cooldown: 2
   recovery: 0.5
   maxUses: -1
+  noiseRadius: 0
   damage: 1
   reach: 1.5
   width: 1.5
-  slashPrefab: {fileID: 5800000000000000001, guid: f01211c5fb662267d8ceceabea57941c, type: 3}
+  slashPrefab: {fileID: 8841647560627534082, guid: a8778e84c7158a648b834c9050251253, type: 3}
   slashDistance: 0.75
   slashLifeTime: 0.35
-  slashRotationOffset: -45
+  slashBaseAngle: 0
+  slashUpAngle: 90
+  slashDownAngle: -90
+  mirrorWhenFacingLeft: 1
