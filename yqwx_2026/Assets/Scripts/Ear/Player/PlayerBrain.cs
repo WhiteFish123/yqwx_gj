@@ -10,7 +10,7 @@ using UnityEngine;
 public class PlayerBrain : MonoBehaviour
 {
     [Header("输入")]
-    public KeyCode grabKey = KeyCode.F;//按住抓箱子
+    public KeyCode grabKey = KeyCode.LeftShift;//按住抓箱子（左 Shift；右手小指够得着，不和 WASD 抢手）
 
     //由外部（传送、过场等）临时关掉；关掉期间所有输入都当作没有
     public bool inputEnabled = true;
@@ -188,7 +188,7 @@ public class PlayerBrain : MonoBehaviour
         return stateMachine.ChangeState(attackState);
     }
 
-    //尝试进入交互状态：必须按住 F，并且正前方真的抓到箱子
+    //尝试进入交互状态：必须按住左 Shift，并且正前方真的抓到箱子
     public bool TryEnterInteract()
     {
         if (!grabHeld || motor.IsMoving)
