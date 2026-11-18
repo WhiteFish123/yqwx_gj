@@ -29,7 +29,7 @@ Transform:
   m_GameObject: {fileID: 281083517840419432}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.5, y: -1.5, z: 0}
+  m_LocalPosition: {x: 2.7999992, y: -1.06, z: 0.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -116,7 +116,12 @@ MonoBehaviour:
   secondFloorTilemap: {fileID: 0}
   floorTilemap: {fileID: 0}
   fallDuration: 0.2
-  maxFallCells: 50
+  fallCells: 1
+  burnNoiseRadius: 12
+  burnNoiseInterval: 0.5
+  fallDamage: 10
+  fallDamageAlong: 3
+  fallDamageAcross: 5
 --- !u!114 &8621976182659707733
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -159,7 +164,7 @@ Transform:
   m_GameObject: {fileID: 6875276082513255622}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.4, z: 0}
+  m_LocalPosition: {x: 0, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -209,7 +214,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -6952619211302602106, guid: cd1be455e0a161d4288949097d602747, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0cfd0d8d9f461ae43935618dc4eebe48, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
