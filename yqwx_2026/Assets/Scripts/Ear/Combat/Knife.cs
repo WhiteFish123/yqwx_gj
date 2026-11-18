@@ -37,6 +37,10 @@ public class Knife : WeaponBase
              "左右挥刀太靠下 → Y 填正数（例如 0.2）；左右有前后偏差 → 调 X")]
     public Vector2 slashLocalOffset = Vector2.zero;
 
+    [Header("调试")]
+    [Tooltip("勾上后挥刀时在 Scene 视图里画出红色判定框（Play 时看得到，不进游戏画面）")]
+    public bool drawHitBox = false;
+
     protected override void DoUse(Vector2 origin, Vector2 facing)
     {
         // 判定框的中心：从使用者中心往朝向前方推半个 reach
@@ -48,6 +52,9 @@ public class Knife : WeaponBase
             : new Vector2(width, reach);
 
         Collider2D[] hits = Physics2D.OverlapBoxAll(center, size, 0f);
+
+        if (drawHitBox)
+            DrawHitBox(center, size);
 
         int count = 0;
         foreach (Collider2D hit in hits)
@@ -70,6 +77,22 @@ public class Knife : WeaponBase
         SpawnSlash(origin, facing);
 
         Debug.Log("挥刀：命中 " + count + " 个目标");
+    }
+
+    //调试用：在 Scene 视图里把判定框画成红色方框（持续 0.4 秒）
+    private void DrawHitBox(Vector2 center, Vector2 size)
+    {
+        Vector2 half = size * 0.5f;
+
+        Vector3 a = new Vector3(center.x - half.x, center.y - half.y, 0f);
+        Vector3 b = new Vector3(center.x + half.x, center.y - half.y, 0f);
+        Vector3 c = new Vector3(center.x + half.x, center.y + half.y, 0f);
+        Vector3 d = new Vector3(center.x - half.x, center.y + half.y, 0f);
+
+        Debug.DrawLine(a, b, Color.red, 0.4f);
+        Debug.DrawLine(b, c, Color.red, 0.4f);
+        Debug.DrawLine(c, d, Color.red, 0.4f);
+        Debug.DrawLine(d, a, Color.red, 0.4f);
     }
 
     //在角色前方放一段刀光。

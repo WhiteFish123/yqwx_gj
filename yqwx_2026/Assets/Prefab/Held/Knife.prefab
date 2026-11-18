@@ -45,12 +45,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cooldown: 2
-  recovery: 0.5
+  recovery: 0.25
   maxUses: -1
   noiseRadius: 0
   damage: 1
   reach: 1.5
-  width: 1.5
+  width: 1
   slashPrefab: {fileID: 8841647560627534082, guid: a8778e84c7158a648b834c9050251253, type: 3}
   slashDistance: 0.75
   slashLifeTime: 0.35
@@ -59,3 +59,4 @@ MonoBehaviour:
   slashDownAngle: -90
   mirrorWhenFacingLeft: 1
   slashLocalOffset: {x: 0, y: 0.2}
+  drawHitBox: 0
