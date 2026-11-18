@@ -40,6 +40,9 @@ public class Knife : WeaponBase
     [Tooltip("刀光整体缩放。刀光比判定框大就调小（0.7 左右），比判定框小就调大")]
     public float slashScale = 1f;
 
+    [Tooltip("刀光动画播放速率（乘在 Animator.speed 上）。1 = 按 clip 原速；2 = 快一倍")]
+    public float slashAnimSpeed = 1f;
+
     [Header("调试")]
     [Tooltip("勾上后挥刀时在 Scene 视图里画出红色判定框（Play 时看得到，不进游戏画面）")]
     public bool drawHitBox = false;
@@ -138,6 +141,11 @@ public class Knife : WeaponBase
 
         //整体缩放：让刀光的可见范围贴合判定框（等比，避免把弧形拉歪）
         fx.transform.localScale = Vector3.one * slashScale;
+
+        //播放速率：不用改 clip 的 Samples，也能在 Inspector 里直接调快慢
+        Animator fxAnimator = fx.GetComponentInChildren<Animator>(true);
+        if (fxAnimator != null)
+            fxAnimator.speed = slashAnimSpeed;
 
         if (mirror)
         {

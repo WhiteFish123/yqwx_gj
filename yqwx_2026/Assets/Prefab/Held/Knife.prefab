@@ -53,11 +53,12 @@ MonoBehaviour:
   width: 1
   slashPrefab: {fileID: 8841647560627534082, guid: a8778e84c7158a648b834c9050251253, type: 3}
   slashDistance: 0.75
-  slashLifeTime: 0.35
+  slashLifeTime: 0.55
   slashBaseAngle: 0
   slashUpAngle: 90
   slashDownAngle: -90
   mirrorWhenFacingLeft: 1
   slashLocalOffset: {x: 0, y: 0.2}
   slashScale: 0.7
+  slashAnimSpeed: 1
   drawHitBox: 0
