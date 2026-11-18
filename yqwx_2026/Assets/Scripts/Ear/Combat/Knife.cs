@@ -106,7 +106,8 @@ public class Knife : WeaponBase
         Vector3 localOffset = mirror ? new Vector3(-slashLocalOffset.x, slashLocalOffset.y, 0f)
                                      : new Vector3(slashLocalOffset.x, slashLocalOffset.y, 0f);
 
-        Vector3 position = origin + facing * slashDistance + rotation * localOffset;
+        //Vector2 和 Vector3 不能直接相加（会报 CS0034 歧义），先转成 Vector3
+        Vector3 position = (Vector3)(origin + facing * slashDistance) + rotation * localOffset;
         GameObject fx = Instantiate(slashPrefab, position, rotation);
 
         if (mirror)
