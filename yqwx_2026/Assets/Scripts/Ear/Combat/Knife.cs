@@ -32,6 +32,11 @@ public class Knife : WeaponBase
     [Tooltip("朝左时用左右镜像（推荐）。关掉就退化成旋转 180° —— 弧线动画会看起来是反的")]
     public bool mirrorWhenFacingLeft = true;
 
+    [Header("刀光位置微调")]
+    [Tooltip("刀光在\"它自己的坐标系\"里的偏移（会跟着刀光一起旋转）。" +
+             "左右挥刀太靠下 → Y 填正数（例如 0.2）；左右有前后偏差 → 调 X")]
+    public Vector2 slashLocalOffset = Vector2.zero;
+
     protected override void DoUse(Vector2 origin, Vector2 facing)
     {
         // 判定框的中心：从使用者中心往朝向前方推半个 reach
@@ -93,8 +98,16 @@ public class Knife : WeaponBase
             angle = slashBaseAngle + (facing.y > 0f ? slashUpAngle : slashDownAngle);
         }
 
-        Vector3 position = origin + facing * slashDistance;
-        GameObject fx = Instantiate(slashPrefab, position, Quaternion.Euler(0f, 0f, angle));
+        Quaternion rotation = Quaternion.Euler(0f, 0f, angle);
+
+        //偏移量要跟着刀光一起转：这样"左右太靠下"这个错位
+        //在朝上时会自动变成"太靠右"、朝下时变成"太靠左"（你在游戏里看到的现象），
+        //只要把 slashLocalOffset.y 调正，四个方向就一起修好了。
+        Vector3 localOffset = mirror ? new Vector3(-slashLocalOffset.x, slashLocalOffset.y, 0f)
+                                     : new Vector3(slashLocalOffset.x, slashLocalOffset.y, 0f);
+
+        Vector3 position = origin + facing * slashDistance + rotation * localOffset;
+        GameObject fx = Instantiate(slashPrefab, position, rotation);
 
         if (mirror)
         {

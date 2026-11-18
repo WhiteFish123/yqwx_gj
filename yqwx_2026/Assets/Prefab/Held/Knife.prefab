@@ -58,3 +58,4 @@ MonoBehaviour:
   slashUpAngle: 90
   slashDownAngle: -90
   mirrorWhenFacingLeft: 1
+  slashLocalOffset: {x: 0, y: 0.2}
