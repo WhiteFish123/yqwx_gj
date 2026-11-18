@@ -654,7 +654,17 @@ MonoBehaviour:
   musicList:
   - id: Retime0
     clip: {fileID: 8300000, guid: aef7c49d57f087a49912d41d08fcfcbe, type: 3}
-  sfxList: []
+  sfxList:
+  - id: sfx_slash
+    clip: {fileID: 8300000, guid: c2c8fc7c2fc80eb5ccdc71ed23a36688, type: 3}
+  - id: sfx_gun
+    clip: {fileID: 8300000, guid: 9364aa63c3ea70de3bb3c905514d8ea4, type: 3}
+  - id: sfx_burn
+    clip: {fileID: 8300000, guid: d131975f496a1983cc387b0430a2049b, type: 3}
+  - id: sfx_ironball
+    clip: {fileID: 8300000, guid: cbcbbad1f6c0d25a3153e10681536720, type: 3}
+  - id: sfx_walk
+    clip: {fileID: 8300000, guid: d3ad7e9fd84fec0401461fd8c0c90984, type: 3}
   defaultMusicId: Retime0
   musicVolume: 1
   sfxVolume: 1

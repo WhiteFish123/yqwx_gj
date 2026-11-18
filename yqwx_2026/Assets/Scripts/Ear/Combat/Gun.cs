@@ -20,6 +20,10 @@ public class Gun : WeaponBase
 
         GameObject go = Instantiate(bulletPrefab, origin + facing * spawnOffset, Quaternion.identity);
 
+        //开枪音效
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlaySfx("sfx_gun");
+
         Projectile bullet = go.GetComponent<Projectile>();
         if (bullet != null) bullet.Launch(facing, bulletSpeed, damage);
     }
