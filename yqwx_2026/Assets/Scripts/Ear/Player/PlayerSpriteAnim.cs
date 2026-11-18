@@ -22,9 +22,15 @@ public class PlayerSpriteAnim : MonoBehaviour
     public Sprite[] walkLeft;
     public Sprite[] walkRight;
 
+    [Header("推箱子帧（留空则自动退回行走帧）")]
+    public Sprite[] pushDown;
+    public Sprite[] pushLeft;
+    public Sprite[] pushRight;
+
     [Header("播放速度（每秒几帧）")]
     public float walkFps = 8f;
     public float idleFps = 3f;
+    public float pushFps = 12f;
 
     private SpriteRenderer sr;
     private PlayerGridMove motor;
@@ -66,7 +72,7 @@ public class PlayerSpriteAnim : MonoBehaviour
 
         if (set.Length <= 1) return;//只有一帧，不用播
 
-        float fps = IsWalking() ? walkFps : idleFps;
+        float fps = IsPushing() ? pushFps : (IsWalking() ? walkFps : idleFps);
         if (fps <= 0f) return;
 
         timer += Time.deltaTime;
@@ -89,11 +95,35 @@ public class PlayerSpriteAnim : MonoBehaviour
         return false;
     }
 
+    //正在推拉箱子吗？
+    private bool IsPushing()
+    {
+        return motor != null && motor.IsPushing;
+    }
+
+    //空数组当作“没配”
+    private static Sprite[] NonEmpty(Sprite[] set)
+    {
+        return (set != null && set.Length > 0) ? set : null;
+    }
+
     //按朝向和状态挑一组图
     private Sprite[] PickSet()
     {
         Vector2Int facing = motor != null ? motor.Facing : Vector2Int.down;
         bool walking = IsWalking();
+
+        //推箱子优先：有该方向的推箱帧就用它，没有就退回行走/待机
+        if (IsPushing())
+        {
+            Sprite[] push = null;
+            if (facing == Vector2Int.left) push = NonEmpty(pushLeft);
+            else if (facing == Vector2Int.right) push = NonEmpty(pushRight);
+            else if (facing != Vector2Int.up) push = NonEmpty(pushDown);
+
+            if (push != null)
+                return push;
+        }
 
         if (facing == Vector2Int.up) return walking ? walkUp : idleUp;
         if (facing == Vector2Int.left) return walking ? walkLeft : idleLeft;

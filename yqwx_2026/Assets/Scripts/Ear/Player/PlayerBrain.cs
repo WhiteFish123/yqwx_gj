@@ -66,6 +66,7 @@ public class PlayerBrain : MonoBehaviour
     }
 
     private float movingGrace;//跨格之间的短暂空档，避免"走/停"在两帧之间来回抖
+    private float pushGrace;//推拉每格之间有极短的间隔，用宽限把推箱帧连起来
 
     //把状态同步给 Animator：朝向 Dir，以及推拉时补上 Move/Idle 并按移动速度缩放速率
     //没有 Animator（或还没指定 controller）时自动跳过，不会报错
@@ -109,6 +110,25 @@ public class PlayerBrain : MonoBehaviour
         else if (facing == Vector2Int.right) dir = 3;
 
         anim.SetInteger("Dir", dir);
+
+        //③ 推箱子：抓着箱子、并且正在推拉时点亮 Push，同时告诉 Animator 推的方向。
+        //   每推一格中间有一瞬间不跨格，给 0.1 秒宽限，否则推箱帧会一格一闪。
+        //   推箱素材只有 正面/左/右 三组，没有背面，朝上推时关掉 Push，让动画退回普通行走帧。
+        if (motor != null && motor.IsPushing)
+            pushGrace = 0.1f;
+        else
+            pushGrace -= Time.deltaTime;
+
+        bool pushing = grabbing && pushGrace > 0f && dir != 1;
+        anim.SetBool("Push", pushing);
+        anim.SetInteger("PushDir", dir);
+
+        //推箱期间压住"走/停"：否则 AnyState→Walk_*/Idle_* 会立刻把推箱状态顶掉
+        if (pushing)
+        {
+            anim.SetBool("Move", false);
+            anim.SetBool("Idle", false);
+        }
     }
 
     private void ReadInput()

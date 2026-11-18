@@ -23,6 +23,7 @@ public class PlayerGridMove : MonoBehaviour
     public Vector3Int Cell => cell;//当前所在格
     public bool IsMoving => isMoving;//是否正在跨格
     public bool IsGrabbing => grabbedChest != null;//是否抓着箱子
+    public bool IsPushing { get; private set; }//是否正在推拉箱子（给动画用）
 
     //推拉时相对走路的移动速度比例�? = 一样快�?.5 = 慢一半）�?
     //给动画用：推拉比走路慢，动画播放速率跟着按比例降低�?
@@ -82,24 +83,16 @@ public class PlayerGridMove : MonoBehaviour
 
         Vector3Int target = new Vector3Int(cell.x + direction.x, cell.y + direction.y, cell.z);
 
-        //朝传送砖迈步就传送（人不会被放到砖上，所以落点不会立刻反弹）
-        TeleportTiles.Kind kind;
-        TeleportTiles gate = TeleportTiles.AtWorld(grid.GetCellCenterWorld(target), out kind);
-        if (gate != null)
+        //朝门口迈步就传送（人不会被放到门格上，所以落点不会立刻反弹）
+        Vector2Int targetCell = new Vector2Int(target.x, target.y);
+        if (Portal.TryFind(grid, targetCell, out Portal portal))
         {
-            gate.Activate(this, kind);
+            portal.Activate(this, targetCell);
             return false;
         }
 
         if (!IsWalkable(target))
-        {
-            //撞到的是传送门就走黑幕传送，不当�?走不�?
-            TeleportDoor door = TeleportDoor.At(grid, new Vector2Int(target.x, target.y));
-            if (door != null)
-                door.Activate(this);
-
             return false;
-        }
 
         if (passability != null && !passability.CanWalk(cell, direction))
             return false;//楼梯侧面、跨楼层这类“这一步不允许”的边
@@ -132,6 +125,7 @@ public class PlayerGridMove : MonoBehaviour
     {
         StopAllCoroutines();//万一正在跨格，先打断
         isMoving = false;
+        IsPushing = false;
         grabbedChest = null;//传送会脱离箱子
         cell = targetCell;
 
@@ -274,6 +268,7 @@ public class PlayerGridMove : MonoBehaviour
     private IEnumerator MoveBothRoutine(Vector2Int playerTarget, Chest chest, Vector2Int chestTarget)//玩家与箱子同步移动一�?
     {
         isMoving = true;
+        IsPushing = true;
 
         bool wasOnSecondFloor = chest.IsSecondFloorCell(chest.Cell);//记下推动前箱子是否在二楼
         bool willBeOnSecondFloor = chest.IsSecondFloorCell(chestTarget);
@@ -296,6 +291,7 @@ public class PlayerGridMove : MonoBehaviour
         transform.position = playerEnd;
         cell = targetCell;
         isMoving = false;
+        IsPushing = false;
 
         if (!wasOnSecondFloor || willBeOnSecondFloor)//没从二楼推出去，正常结束
             yield break;
