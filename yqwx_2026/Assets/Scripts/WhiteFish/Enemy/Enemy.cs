@@ -208,7 +208,7 @@ public class Enemy : MonoBehaviour, IDamageable, INoiseListener
 
             SpriteRenderer trailSprite = trailEffect.GetComponent<SpriteRenderer>();
             if (trailSprite != null)
-                trailSprite.flipX = direction.x != 0 ? direction.x > 0 : direction.y > 0;//让浓的一端朝向身�?
+                trailSprite.flipX = direction.x != 0 ? direction.x < 0 : direction.y < 0;//让浓的一端朝向身�?
         }
 
         if (spriteRenderer == null)
