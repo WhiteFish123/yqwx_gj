@@ -28,10 +28,6 @@ public class IronBall : WeaponBase
         Vector3 spawnPos = origin + facing * spawnOffset;
         GameObject ball = Instantiate(projectilePrefab, spawnPos, Quaternion.identity);
 
-        //铁球音效
-        if (AudioManager.Instance != null)
-            AudioManager.Instance.PlaySfx("sfx_ironball");
-
         // 把方向和速度交给球自己飞
         Projectile projectile = ball.GetComponent<Projectile>();
         if (projectile != null) projectile.Launch(facing, speed, damage);

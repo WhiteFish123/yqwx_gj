@@ -30,10 +30,6 @@ public class AudioManager : MonoBehaviour
     private AudioSource sfxSource;//音效
     private string currentMusicId;
 
-    //循环音效：每个 id 一个独立音源，才能"单独开始/单独停"
-    private readonly Dictionary<string, AudioSource> loopSources = new Dictionary<string, AudioSource>();
-    private readonly Dictionary<string, float> loopScales = new Dictionary<string, float>();
-
     public float MusicVolume
     {
         get { return musicVolume; }
@@ -47,11 +43,7 @@ public class AudioManager : MonoBehaviour
     public float SfxVolume
     {
         get { return sfxVolume; }
-        set
-        {
-            sfxVolume = Mathf.Clamp01(value);
-            RefreshLoopVolumes();
-        }
+        set { sfxVolume = Mathf.Clamp01(value); }
     }
 
     private void Awake()
@@ -125,94 +117,6 @@ public class AudioManager : MonoBehaviour
     {
         if (musicSource != null)
             musicSource.UnPause();
-    }
-
-    // ===== 循环音效（燃烧声、走路声这种"持续响"的）=====
-
-    //开始循环播放。同一个 id 已经在播就不会重播，只更新音量。
-    public void PlayLoopSfx(string id, float volumeScale = 1f)
-    {
-        if (string.IsNullOrEmpty(id))
-        {
-            Debug.LogWarning("[AudioManager] PlayLoopSfx 的 id 为空");
-            return;
-        }
-
-        AudioClip clip;
-        if (!sfxMap.TryGetValue(id, out clip))
-        {
-            Debug.LogWarning("[AudioManager] 未找到循环音效：" + id);
-            return;
-        }
-
-        AudioSource source = GetLoopSource(id);
-
-        source.clip = clip;
-        source.loop = true;
-        loopScales[id] = Mathf.Clamp01(volumeScale);
-        source.volume = loopScales[id] * sfxVolume;
-
-        if (!source.isPlaying)
-            source.Play();
-    }
-
-    //立刻停止某个循环音效（燃烧熄灭、停下脚步时调它）
-    public void StopLoopSfx(string id)
-    {
-        if (string.IsNullOrEmpty(id))
-            return;
-
-        AudioSource source;
-        if (loopSources.TryGetValue(id, out source) && source != null)
-            source.Stop();
-    }
-
-    //停掉所有循环音效（切场景、暂停时收尾用）
-    public void StopAllLoopSfx()
-    {
-        foreach (KeyValuePair<string, AudioSource> pair in loopSources)
-        {
-            if (pair.Value != null)
-                pair.Value.Stop();
-        }
-    }
-
-    public bool IsLoopSfxPlaying(string id)
-    {
-        AudioSource source;
-        return loopSources.TryGetValue(id, out source) && source != null && source.isPlaying;
-    }
-
-    //每个循环音效一个独立 AudioSource（挂在 AudioManager 下的子物体上）
-    private AudioSource GetLoopSource(string id)
-    {
-        AudioSource source;
-        if (loopSources.TryGetValue(id, out source) && source != null)
-            return source;
-
-        source = GetOrAddAudioSource("Loop_" + id);
-        source.loop = true;
-        source.playOnAwake = false;
-        source.volume = sfxVolume;
-
-        loopSources[id] = source;
-        return source;
-    }
-
-    //音量改动后，把所有循环音效的音量按各自的倍率重新算一遍
-    private void RefreshLoopVolumes()
-    {
-        foreach (KeyValuePair<string, AudioSource> pair in loopSources)
-        {
-            if (pair.Value == null)
-                continue;
-
-            float scale;
-            if (!loopScales.TryGetValue(pair.Key, out scale))
-                scale = 1f;
-
-            pair.Value.volume = scale * sfxVolume;
-        }
     }
 
     public void PlaySfx(string id, float volumeScale = 1f)//播放音效

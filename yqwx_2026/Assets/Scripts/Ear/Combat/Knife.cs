@@ -82,10 +82,6 @@ public class Knife : WeaponBase
 
         SpawnSlash(origin, facing);
 
-        //挥刀音效（刀有冷却，不会叠音）
-        if (AudioManager.Instance != null)
-            AudioManager.Instance.PlaySfx("sfx_slash");
-
         Debug.Log("挥刀：命中 " + count + " 个目标");
     }
 
