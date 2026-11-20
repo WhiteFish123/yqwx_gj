@@ -1,0 +1,151 @@
+using UnityEngine;
+using UnityEngine.EventSystems;
+using Yarn.Unity;
+
+// 最小可玩验证用：游戏中按 E 直接开始一段 Yarn 对话。
+// 对话期间锁住玩家输入，对话结束后自动解锁。
+// 正式版应该改成「走到 NPC 面前按 E 触发对应节点」，这里只是先用快捷键把链路跑通。
+public class DialogueHotkey : MonoBehaviour
+{
+    [Header("引用（留空自动查找）")]
+    public DialogueRunner runner;
+    public PlayerBrain brain;
+
+    [Header("配置")]
+    [Tooltip("开始对话的按键")]
+    public KeyCode startKey = KeyCode.E;
+
+    [Tooltip("要播放的 Yarn 节点名")]
+    public string startNode = "Start";
+
+    private bool running;
+    private PauseMenu pauseMenu;
+    private OptionsPresenter optionsPresenter;
+    private readonly System.Collections.Generic.List<OptionItem> visibleOptions = new();
+
+    private void Awake()
+    {
+        if (runner == null)
+            runner = FindFirstObjectByType<DialogueRunner>();
+
+        if (brain == null)
+            brain = FindFirstObjectByType<PlayerBrain>();
+
+        pauseMenu = FindFirstObjectByType<PauseMenu>();
+
+        if (runner != null)
+            optionsPresenter = runner.GetComponentInChildren<OptionsPresenter>(true);
+    }
+
+    private void Update()
+    {
+        if (runner == null)
+            return;
+
+        if (running)
+        {
+            // 对话刚结束：把输入还回去
+            if (!runner.IsDialogueRunning)
+            {
+                running = false;
+                SetPlayerInput(true);
+                return;
+            }
+
+            // 出现选项时：W/S（或上下方向键）切换，E/空格/回车 确认
+            if (TryHandleOptions())
+                return;
+
+            // 对话中按 E：推进下一句 / 跳过打字机
+            if (Input.GetKeyDown(startKey))
+                runner.RequestNextContent();
+
+            return;
+        }
+
+        if (!Input.GetKeyDown(startKey))
+            return;
+
+        // 暂停或背包打开时不要触发对话
+        if (pauseMenu != null && pauseMenu.IsPaused)
+            return;
+
+        if (Time.timeScale <= 0f)
+            return;
+
+        running = true;
+        SetPlayerInput(false);
+        runner.StartDialogue(startNode);
+    }
+
+    // 选项出现时接管键盘：W/S 或上下键切换，E/空格/回车 确认。
+    // 返回 true 表示这一帧的按键已经被选项吃掉了，不要再推进对话。
+    private bool TryHandleOptions()
+    {
+        if (optionsPresenter == null)
+            return false;
+
+        visibleOptions.Clear();
+        foreach (var item in optionsPresenter.GetComponentsInChildren<OptionItem>(false))
+        {
+            if (item.gameObject.activeInHierarchy && item.IsInteractable())
+                visibleOptions.Add(item);
+        }
+
+        if (visibleOptions.Count == 0)
+            return false;
+
+        var es = EventSystem.current;
+        if (es == null)
+            return false;
+
+        int current = IndexOfSelected(es);
+        bool down = Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow);
+        bool up = Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow);
+
+        if (up || down)
+        {
+            if (current < 0)
+                current = 0;
+            else
+                current = (current + (down ? 1 : -1) + visibleOptions.Count) % visibleOptions.Count;
+
+            es.SetSelectedGameObject(visibleOptions[current].gameObject);
+            return true;
+        }
+
+        bool confirm = Input.GetKeyDown(startKey)
+                       || Input.GetKeyDown(KeyCode.Space)
+                       || Input.GetKeyDown(KeyCode.Return)
+                       || Input.GetKeyDown(KeyCode.KeypadEnter);
+
+        if (!confirm)
+            return false;
+
+        var target = visibleOptions[current < 0 ? 0 : current].gameObject;
+        es.SetSelectedGameObject(target);
+        ExecuteEvents.Execute(target, new BaseEventData(es), ExecuteEvents.submitHandler);
+        return true;
+    }
+
+    private int IndexOfSelected(EventSystem es)
+    {
+        var selected = es.currentSelectedGameObject;
+        if (selected == null)
+            return -1;
+
+        for (int i = 0; i < visibleOptions.Count; i++)
+        {
+            if (visibleOptions[i].gameObject == selected)
+                return i;
+        }
+
+        return -1;
+    }
+
+    private void SetPlayerInput(bool enabled)
+    {
+        if (brain != null)
+            brain.inputEnabled = enabled;
+    }
+}

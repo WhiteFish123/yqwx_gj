@@ -140,7 +140,10 @@ public class PlayerGridMove : MonoBehaviour
             return false;
 
         Vector2Int playerCell = new Vector2Int(cell.x, cell.y);
-        Chest chest = Chest.At(playerCell + Facing);
+        Chest chest = Chest.At(grid, playerCell + Facing);
+
+        if (chest != null && !OnSameFloor(cell, new Vector3Int(chest.Cell.x, chest.Cell.y, cell.z)))
+            return false;//楼上的玩家够不到楼下的箱子
 
         if (chest != null && chest.IsBusy)//a chest in mid-air cannot be grabbed
             return false;
@@ -169,6 +172,9 @@ public class PlayerGridMove : MonoBehaviour
 
         Vector2Int playerCell = new Vector2Int(cell.x, cell.y);
 
+        if (!OnSameFloor(cell, new Vector3Int(grabbedChest.Cell.x, grabbedChest.Cell.y, cell.z)))
+            return false;
+
         if (!ChestPushPullRules.TryComputeTargets(playerCell, grabbedChest.Cell, Facing, kind,
                 out Vector2Int playerTarget, out Vector2Int chestTarget))
             return false;
@@ -193,7 +199,7 @@ public class PlayerGridMove : MonoBehaviour
 
     private bool HasOtherChest(Vector2Int target)//目标格是否被别的箱子占着
     {
-        Chest chest = Chest.At(target);
+        Chest chest = Chest.At(grid, target);
         return chest != null && chest != grabbedChest;
     }
 
@@ -202,7 +208,22 @@ public class PlayerGridMove : MonoBehaviour
         if (IsBlocked(target))
             return false;
 
-        return Chest.At(new Vector2Int(target.x, target.y)) == null;
+        Chest chest = Chest.At(grid, new Vector2Int(target.x, target.y));
+
+        //另一层地板上的箱子不该挡住这一层
+        return chest == null || !OnSameFloor(cell, target);
+    }
+
+    //玩家和某格是不是同一楼层（任一边查不到楼层信息时按同一层处理）
+    private bool OnSameFloor(Vector3Int from, Vector3Int to)
+    {
+        if (passability == null)
+            return true;
+
+        int fromFloor = passability.FloorOf(from);
+        int toFloor = passability.FloorOf(to);
+
+        return fromFloor == 0 || toFloor == 0 || fromFloor == toFloor;
     }
 
     private bool IsBlocked(Vector3Int target)//目标格是否被挡住
