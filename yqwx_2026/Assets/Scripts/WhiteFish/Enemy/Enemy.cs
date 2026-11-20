@@ -351,7 +351,10 @@ public class Enemy : MonoBehaviour, IDamageable, INoiseListener
 
         //已经在调查时 ChangeState 会返�?false（同状态不切换），
         //但调查状态每帧都�?heardCell，所以目标会自动改成新位置�?
+        bool wasInvestigating = stateMachine.currentState == investigateState;
         stateMachine.ChangeState(investigateState);
+        if (!wasInvestigating)
+            NoiseMark.Show(this);//右上角冒出问号
     }
 
     public void ClearHeardCell()//调查结束，忘掉这次声�?

@@ -93,6 +93,12 @@ public sealed class GridPassability : MonoBehaviour
         return GridRules.ShouldFall(map.At(from), map.At(to));
     }
 
+    // 某格在几楼（1 或 2）；没有地图数据时返回 0
+    public int FloorOf(Vector3Int cell)
+    {
+        return HasMap ? map.At(cell).Floor : 0;
+    }
+
     // 查某格信息（调试用）
     public CellInfo At(Vector3Int cell)
     {

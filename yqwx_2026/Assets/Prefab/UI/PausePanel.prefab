@@ -933,6 +933,7 @@ GameObject:
   - component: {fileID: 7563174798902448954}
   - component: {fileID: 8370140697193847878}
   - component: {fileID: 5057465061827575761}
+  - component: {fileID: 1989187182955896457}
   m_Layer: 5
   m_Name: PausePanel
   m_TagString: Untagged
@@ -1022,3 +1023,15 @@ MonoBehaviour:
   mainMenuScene: StartScene
   slSceneName: SLScene
   fadeTime: 0.4
+--- !u!225 &1989187182955896457
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8042939396597498622}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0

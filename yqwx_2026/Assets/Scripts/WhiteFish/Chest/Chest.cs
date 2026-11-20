@@ -78,10 +78,54 @@ public class Chest : MonoBehaviour, INoiseSource
         return null;
     }
 
+    //同一格号在不同 Grid 下是不同的世界位置，必须连网格一起比，
+    //否则二楼 (-3,18) 的箱子会挡住一楼 (-3,18) 那一格（表现为"空气墙"）。
+    public static Chest At(Grid grid, Vector2Int target)
+    {
+        if (grid == null)
+            return At(target);
+
+        foreach (Chest chest in activeChests)
+        {
+            if (chest != null && chest.grid == grid && chest.cell == target)
+                return chest;
+        }
+
+        return null;
+    }
+
+    //找自己真正所在的网格：先看父级，再看"脚下这一格确实有瓦片"的网格，
+    //最后才退回全场景第一个 Grid（避免拿到场景里空着的六边形模板 Grid）。
+    private Grid ResolveGrid()
+    {
+        Grid parent = GetComponentInParent<Grid>();
+
+        if (parent != null)
+            return parent;
+
+        Vector3 position = transform.position;
+
+        foreach (Grid candidate in FindObjectsByType<Grid>(FindObjectsSortMode.None))
+        {
+            if (candidate.cellLayout != GridLayout.CellLayout.Rectangle)
+                continue;
+
+            Vector3Int target = candidate.WorldToCell(position);
+
+            foreach (Tilemap tilemap in candidate.GetComponentsInChildren<Tilemap>(true))
+            {
+                if (tilemap.HasTile(target))
+                    return candidate;
+            }
+        }
+
+        return FindFirstObjectByType<Grid>();
+    }
+
     private void Awake()//先于 OnEnable 注册，保证进表时格子已正�?
     {
         if (grid == null)
-            grid = FindFirstObjectByType<Grid>();
+            grid = ResolveGrid();
 
         if (grid != null)
             cell = (Vector2Int)grid.WorldToCell(transform.position);
@@ -119,11 +163,24 @@ public class Chest : MonoBehaviour, INoiseSource
 
             if (floorTilemap == null)
             {
-                Transform fl = host.Find("Floor");
+                //楼层图层会按 L1/L2/L3 改名（Floor_L2），所以按前缀找
+                Transform fl = FindTilemapChild(host, "Floor");
                 if (fl != null)
                     floorTilemap = fl.GetComponent<Tilemap>();
             }
         }
+    }
+
+    //按名字前缀找 Grid 下的 Tilemap 子物体（Floor_L1 / SecondFloor 都能找到）
+    private static Transform FindTilemapChild(Transform host, string prefix)
+    {
+        foreach (Transform child in host)
+        {
+            if (child.name.StartsWith(prefix) && child.GetComponent<Tilemap>() != null)
+                return child;
+        }
+
+        return null;
     }
 
     private void OnEnable()
@@ -249,7 +306,7 @@ public class Chest : MonoBehaviour, INoiseSource
         if (secondFloorTilemap != null && secondFloorTilemap.HasTile(target))
             return false;
 
-        return Chest.At(new Vector2Int(target.x, target.y)) == null;
+        return Chest.At(grid, new Vector2Int(target.x, target.y)) == null;
     }
 
     //逐格向下掉落，每格用 fallDuration
