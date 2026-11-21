@@ -3,7 +3,12 @@ using UnityEngine.EventSystems;
 using Yarn.Unity;
 
 // 最小可玩验证用：游戏中按 E 直接开始一段 Yarn 对话。
-// 对话期间锁住玩家输入，对话结束后自动解锁。
+// 对话期间锁住玩家输入（含手持物按空格点火），对话结束后自动解锁。
+//
+// 按键分工：
+//   E          开始对话
+//   W / S      选项上下选择（也认方向键）
+//   空格       推进下一句 / 跳过打字机；选项出现时＝选中当前项
 // 正式版应该改成「走到 NPC 面前按 E 触发对应节点」，这里只是先用快捷键把链路跑通。
 public class DialogueHotkey : MonoBehaviour
 {
@@ -14,6 +19,9 @@ public class DialogueHotkey : MonoBehaviour
     [Header("配置")]
     [Tooltip("开始对话的按键")]
     public KeyCode startKey = KeyCode.E;
+
+    [Tooltip("对话中推进/确认的按键")]
+    public KeyCode advanceKey = KeyCode.Space;
 
     [Tooltip("要播放的 Yarn 节点名")]
     public string startNode = "Start";
@@ -52,12 +60,12 @@ public class DialogueHotkey : MonoBehaviour
                 return;
             }
 
-            // 出现选项时：W/S（或上下方向键）切换，E/空格/回车 确认
+            // 出现选项时：W/S（或上下方向键）切换，空格/回车 确认
             if (TryHandleOptions())
                 return;
 
-            // 对话中按 E：推进下一句 / 跳过打字机
-            if (Input.GetKeyDown(startKey))
+            // 对话中按空格：推进下一句 / 跳过打字机
+            if (Input.GetKeyDown(advanceKey))
                 runner.RequestNextContent();
 
             return;
@@ -78,7 +86,7 @@ public class DialogueHotkey : MonoBehaviour
         runner.StartDialogue(startNode);
     }
 
-    // 选项出现时接管键盘：W/S 或上下键切换，E/空格/回车 确认。
+    // 选项出现时接管键盘：W/S 或上下键切换，空格（也认回车）确认。
     // 返回 true 表示这一帧的按键已经被选项吃掉了，不要再推进对话。
     private bool TryHandleOptions()
     {
@@ -114,8 +122,7 @@ public class DialogueHotkey : MonoBehaviour
             return true;
         }
 
-        bool confirm = Input.GetKeyDown(startKey)
-                       || Input.GetKeyDown(KeyCode.Space)
+        bool confirm = Input.GetKeyDown(advanceKey)
                        || Input.GetKeyDown(KeyCode.Return)
                        || Input.GetKeyDown(KeyCode.KeypadEnter);
 

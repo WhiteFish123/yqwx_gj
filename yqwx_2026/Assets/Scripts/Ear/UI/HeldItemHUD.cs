@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Yarn.Unity;
 
 // 右下角的"手上道具"提示框。
 //
@@ -8,6 +9,9 @@ using UnityEngine.UI;
 //   - 地上那件道具的图案（直接取 worldPrefab 上 SpriteRenderer 的 sprite 和颜色）
 //   - 名字；有使用次数的带上 n/m，例如 枪（4/6）、药（1/1）；无限次的只显示名字（刀、油）
 //   - 旁边的 "J" 由你摆一个静态文字进去，用来提示"按 J 使用"
+//
+// 对话时：整框（图标/名字/按键提示）一起淡出，对话结束后自动恢复。
+// 判断依据是 DialogueRunner.IsDialogueRunning，所以不管对话是快捷键开的还是 NPC 开的都生效。
 //
 // ★ 空手时用 CanvasGroup.alpha = 0 隐藏，而不是 SetActive(false)。
 //   原因：这个脚本常常就挂在"要被隐藏的那个框"上，
@@ -27,6 +31,13 @@ public class HeldItemHUD : MonoBehaviour
     [Tooltip("要显示/隐藏的那个框。可以填脚本所在的物体自身；留空则始终显示，只清空内容")]
     public GameObject boxRoot;
 
+    [Header("对话")]
+    [Tooltip("对话进行时把整个框（图标 + 名字 + 按键提示）淡出，对话结束后恢复")]
+    public bool hideDuringDialogue = true;
+
+    [Tooltip("对话系统，留空自动在场景里找（对话是谁开的都算，不只 DialogueHotkey）")]
+    public DialogueRunner dialogueRunner;
+
     [Header("图案尺寸")]
     [Tooltip("打开后：按图片比例自动调整图案框大小，细长道具会占更多横向空间。关掉则固定框大小、只等比缩放图片")]
     public bool fitIconToSprite = false;
@@ -40,6 +51,7 @@ public class HeldItemHUD : MonoBehaviour
     private InventoryItem lastItem;
     private int lastUses = int.MinValue;
     private CanvasGroup boxGroup;
+    private bool dialogueHidden;      //对话正开着 → 整框淡出
 
     private Vector2 iconCenter;        //图案框初始的视觉中心（相对父物体）
     private bool iconCenterCached;
@@ -54,12 +66,18 @@ public class HeldItemHUD : MonoBehaviour
                 boxGroup = boxRoot.AddComponent<CanvasGroup>();
         }
 
+        if (dialogueRunner == null)
+            dialogueRunner = FindFirstObjectByType<DialogueRunner>();
+
         //记下图案框原本的中心，之后按比例改尺寸时用它把位置补偿回来
         CacheIconCenter();
     }
 
     private void Update()
     {
+        //对话开着就整框淡出，对话结束再恢复（每帧比对一次 bool，不依赖对话是从哪开的）
+        UpdateDialogueHidden();
+
         if (slot == null)
         {
             slot = FindFirstObjectByType<HeldItemSlot>();
@@ -80,11 +98,36 @@ public class HeldItemHUD : MonoBehaviour
         Refresh(item);
     }
 
+    //对话状态变化时才动一次显隐：
+    //对话开始 → 整个框（图标/名字/按键提示）一起淡出；对话结束 → 按手上有没有东西恢复。
+    private void UpdateDialogueHidden()
+    {
+        if (dialogueRunner == null)
+            dialogueRunner = FindFirstObjectByType<DialogueRunner>();
+
+        bool hiddenNow = hideDuringDialogue
+                         && dialogueRunner != null
+                         && dialogueRunner.IsDialogueRunning;
+
+        if (hiddenNow == dialogueHidden)
+            return;
+
+        dialogueHidden = hiddenNow;
+        ApplyVisibility();
+    }
+
+    //显隐的唯一口径：有物品 且 不在对话中
+    private void ApplyVisibility()
+    {
+        bool has = lastItem != null && lastItem.data != null;
+        SetVisible(has && !dialogueHidden);
+    }
+
     private void Refresh(InventoryItem item)
     {
         bool has = item != null && item.data != null;
 
-        SetVisible(has);
+        SetVisible(has && !dialogueHidden);
 
         if (!has)
         {

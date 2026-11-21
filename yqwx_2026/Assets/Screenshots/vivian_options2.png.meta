@@ -134,7 +134,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      vivian_options2_0: 2131463034017491173
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
