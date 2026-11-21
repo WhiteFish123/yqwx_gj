@@ -5,8 +5,8 @@ public class Enemy_ChaseState : Enemy_PathMoveState
 {
     private const int lockRange = 3;//锁定范围：这么多格内即使背对也继续追
 
-    public Enemy_ChaseState(Enemy enemy, StateMachine stateMachine, string animBoolName)
-        : base(enemy, stateMachine, animBoolName)
+    public Enemy_ChaseState(Enemy enemy, StateMachine stateMachine, string animBoolName, string animPlayName = null)
+        : base(enemy, stateMachine, animBoolName, animPlayName)
     {
     }
 

@@ -26,6 +26,11 @@ public class Enemy_AttackState : EnemyState
 
     private float elapsed;//攻击已进行时�?
 
+    //?????;??????(??????????????)
+    protected virtual int DashCellLimit
+    {
+        get { return enemy.attackDashCells; }
+    }
     public Enemy_AttackState(Enemy enemy, StateMachine stateMachine, string attackAnimName, string recoverAnimName)
         : base(enemy, stateMachine, null)//攻击不参�?bool 参数体系
     {
@@ -51,7 +56,7 @@ public class Enemy_AttackState : EnemyState
             anim.speed = 1f;
 
             if (!string.IsNullOrEmpty(attackAnimName))
-                anim.Play(attackAnimName);
+                anim.Play(enemy.ResolveAnimName(attackAnimName));
         }
     }
 
@@ -138,14 +143,14 @@ public class Enemy_AttackState : EnemyState
                 progress = 0f;
                 cellsMoved++;
 
-                if (cellsMoved >= enemy.attackDashCells)
+                if (cellsMoved >= DashCellLimit)
                     RequestFinish();
             }
 
             return;
         }
 
-        if (cellsMoved >= enemy.attackDashCells)//冲满�?
+        if (cellsMoved >= DashCellLimit)//冲满�?
         {
             RequestFinish();
             return;
@@ -198,7 +203,7 @@ public class Enemy_AttackState : EnemyState
         SetTrail(false);//冲刺结束关闭拖尾
 
         if (anim != null && !string.IsNullOrEmpty(recoverAnimName))
-            anim.Play(recoverAnimName);
+            anim.Play(enemy.ResolveAnimName(recoverAnimName));
 
         //some enemies (e.g. the stone gargoyle) have no chase state: fall back to idle
         EntityState next = enemy.chaseState != null ? enemy.chaseState : enemy.idleState;

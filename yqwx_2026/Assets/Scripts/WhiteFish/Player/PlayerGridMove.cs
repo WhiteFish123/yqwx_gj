@@ -228,6 +228,10 @@ public class PlayerGridMove : MonoBehaviour
 
     private bool IsBlocked(Vector3Int target)//目标格是否被挡住
     {
+        // ground pickups block their cell until picked up
+        if (Pickup.BlocksCell(grid, target))
+            return true;
+
         if (blockingMask != 0)
         {
             Vector3 center = grid.GetCellCenterWorld(target);
