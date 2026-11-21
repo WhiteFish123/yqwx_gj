@@ -45,6 +45,61 @@ public class EnemyVision
         return result;
     }
 
+    //史莱姆索敌范围：以「朝右」为例
+    //  中间 3 排（side = -1/0/+1）：身后 1 格 ~ 前方 3 格
+    //  上下 2 排（side = -2/+2）：只有前方 1~3 格（四个角被切掉）
+    //整体是 5 排宽、最多 5 格长的扇形，会被障碍物按排裁剪；随朝向旋转
+    public List<Vector2Int> GetSlimeSightCells(Vector3Int origin, Vector2Int facing)
+    {
+        return GetFanSightCells(origin, facing, 3, 1);
+    }
+
+    //爱丽丝的索敌范围：同样是「朝右」为基准的扇形，只是更长
+    //  中间 3 排（side = -1/0/+1）：身后 1 格 + 前方 1~7 格
+    //  上下 2 排（side = -2/+2）：只有前方 1~7 格（四个角被切掉）
+    // 整体是 5 排宽、最远 7 格的扇形，会被障碍物按排裁剪；随朝向旋转
+    public List<Vector2Int> GetAliceSightCells(Vector3Int origin, Vector2Int facing)
+    {
+        return GetFanSightCells(origin, facing, 7, 1);
+    }
+
+    //扇形索敌：forward = 最远几格，behind = 中间 3 排往身后看几格
+    public List<Vector2Int> GetFanSightCells(Vector3Int origin, Vector2Int facing, int forward, int behind)
+    {
+        List<Vector2Int> result = new List<Vector2Int>();
+
+        if (grid == null || facing == Vector2Int.zero)
+            return result;
+
+        Vector2Int side = new Vector2Int(-facing.y, facing.x);//朝向的右侧法线
+
+        for (int row = -2; row <= 2; row++)
+        {
+            int firstStep = Mathf.Abs(row) <= 1 ? -Mathf.Max(0, behind) : 1;//中间 3 排含身后，最上/最下 2 排只朝前
+
+            for (int step = firstStep; step <= forward; step++)
+            {
+                if (step == 0)
+                    continue;//自身格不算
+
+                Vector2Int offset = facing * step + side * row;
+                Vector3Int cell = origin + new Vector3Int(offset.x, offset.y, 0);
+
+                if (IsBlocked(cell))
+                {
+                    if (step >= 0)
+                        break;//前方被挡住，这一排更远的都看不到
+
+                    continue;//身后那格被挡住不影响前方
+                }
+
+                result.Add(new Vector2Int(cell.x, cell.y));
+            }
+        }
+
+        return result;
+    }
+
     //格子中心是否有障碍物（缩到 0.8 倍避免相邻格边缘误判）
     public bool IsBlocked(Vector3Int cell)
     {

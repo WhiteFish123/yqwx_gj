@@ -248,8 +248,17 @@ public class Enemy : MonoBehaviour, IDamageable, INoiseListener
             return false;
 
         Vector3Int playerCell = WorldToCell(player.transform.position);
-        List<Vector2Int> visible = vision.GetVisibleCells(WorldToCell(transform.position), facing);
+        List<Vector2Int> visible = GetSightCells(WorldToCell(transform.position), facing);
         return visible.Contains(new Vector2Int(playerCell.x, playerCell.y));
+    }
+
+    // Subclasses override this to change the detection shape (default: forward rectangle).
+    protected virtual List<Vector2Int> GetSightCells(Vector3Int origin, Vector2Int facing)
+    {
+        if (vision == null)
+            return new List<Vector2Int>();
+
+        return vision.GetVisibleCells(origin, facing);
     }
 
     public virtual bool CanDetectPlayer()//玩家是否被察觉（史莱姆：3 排宽视野；石像鬼：正前方直线�?

@@ -9,6 +9,7 @@ using Yarn.Unity;
 //   E          开始对话
 //   W / S      选项上下选择（也认方向键）
 //   空格       推进下一句 / 跳过打字机；选项出现时＝选中当前项
+//   长按左Ctrl 连续快进（遇到选项会自动停下，避免误点）
 // 正式版应该改成「走到 NPC 面前按 E 触发对应节点」，这里只是先用快捷键把链路跑通。
 public class DialogueHotkey : MonoBehaviour
 {
@@ -26,7 +27,14 @@ public class DialogueHotkey : MonoBehaviour
     [Tooltip("要播放的 Yarn 节点名")]
     public string startNode = "Start";
 
+    [Tooltip("长按这个键可以连续快进对话")]
+    public KeyCode fastForwardKey = KeyCode.LeftControl;
+
+    [Tooltip("快进时每隔多少秒推进一句")]
+    public float fastForwardInterval = 0.07f;
+
     private bool running;
+    private float fastForwardTimer;
     private PauseMenu pauseMenu;
     private OptionsPresenter optionsPresenter;
     private readonly System.Collections.Generic.List<OptionItem> visibleOptions = new();
@@ -45,6 +53,22 @@ public class DialogueHotkey : MonoBehaviour
             optionsPresenter = runner.GetComponentInChildren<OptionsPresenter>(true);
     }
 
+    // 给外部（开场黑幕、剧情触发等）用：由别人决定什么时候开始播哪一段，
+    // 但推进 / 快进 / 选项的键盘处理仍然交给这里，不用重复实现一套。
+    public void BeginDialogue(string node)
+    {
+        if (runner == null)
+            return;
+
+        if (runner.IsDialogueRunning)
+            return;
+
+        running = true;
+        fastForwardTimer = 0f;
+        SetPlayerInput(false);
+        runner.StartDialogue(string.IsNullOrEmpty(node) ? startNode : node);
+    }
+
     private void Update()
     {
         if (runner == null)
@@ -56,6 +80,7 @@ public class DialogueHotkey : MonoBehaviour
             if (!runner.IsDialogueRunning)
             {
                 running = false;
+                fastForwardTimer = 0f;
                 SetPlayerInput(true);
                 return;
             }
@@ -63,6 +88,22 @@ public class DialogueHotkey : MonoBehaviour
             // 出现选项时：W/S（或上下方向键）切换，空格/回车 确认
             if (TryHandleOptions())
                 return;
+
+            // 长按快进：每隔一点时间推进一句。
+            // 选项面板正在显示时不快进——否则 RequestNextContent 会把选项取消掉，等于替玩家乱选。
+            if (Input.GetKey(fastForwardKey) && !OptionsOnScreen())
+            {
+                fastForwardTimer -= Time.unscaledDeltaTime;
+                if (fastForwardTimer <= 0f)
+                {
+                    fastForwardTimer = Mathf.Max(0.01f, fastForwardInterval);
+                    runner.RequestNextContent();
+                }
+
+                return;
+            }
+
+            fastForwardTimer = 0f;
 
             // 对话中按空格：推进下一句 / 跳过打字机
             if (Input.GetKeyDown(advanceKey))
@@ -84,6 +125,25 @@ public class DialogueHotkey : MonoBehaviour
         running = true;
         SetPlayerInput(false);
         runner.StartDialogue(startNode);
+    }
+
+    // 选项面板是否正显示在屏幕上（用来阻止快进把选项跳掉）
+    private bool OptionsOnScreen()
+    {
+        if (optionsPresenter == null)
+            return false;
+
+        var group = optionsPresenter.GetComponent<CanvasGroup>();
+        if (group != null && group.alpha > 0.01f)
+            return true;
+
+        foreach (var item in optionsPresenter.GetComponentsInChildren<OptionItem>(false))
+        {
+            if (item.gameObject.activeInHierarchy)
+                return true;
+        }
+
+        return false;
     }
 
     // 选项出现时接管键盘：W/S 或上下键切换，空格（也认回车）确认。

@@ -46,6 +46,17 @@ public class AudioManager : MonoBehaviour
         set { sfxVolume = Mathf.Clamp01(value); }
     }
 
+    //当前正在播的音乐 id（没在播就是空）
+    public string CurrentMusicId
+    {
+        get { return currentMusicId; }
+    }
+
+    public bool IsMusicPlaying
+    {
+        get { return musicSource != null && musicSource.isPlaying; }
+    }
+
     private void Awake()
     {
         if (Instance != null && Instance != this)

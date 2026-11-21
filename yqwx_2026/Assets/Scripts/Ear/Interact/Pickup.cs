@@ -19,6 +19,44 @@ public class Pickup : MonoBehaviour, IInteractable
     private Inventory bag;//缓存背包，避免每帧 FindFirstObjectByType
     private HeldItemSlot slot;//缓存手持栏
 
+    // 场上所有还没被捡走的地面道具：玩家不能走进它们所在的格子
+    private static readonly System.Collections.Generic.List<Pickup> active =
+        new System.Collections.Generic.List<Pickup>();
+
+    private void OnEnable()
+    {
+        if (!active.Contains(this))
+            active.Add(this);
+    }
+
+    private void OnDisable()
+    {
+        active.Remove(this);
+    }
+
+    // 这一格有没有待拾取的道具（有的话玩家走不进去）
+    public static bool BlocksCell(Grid grid, Vector3Int cell)
+    {
+        if (grid == null)
+            return false;
+
+        for (int i = active.Count - 1; i >= 0; i--)
+        {
+            Pickup pickup = active[i];
+
+            if (pickup == null)
+            {
+                active.RemoveAt(i);
+                continue;
+            }
+
+            if (grid.WorldToCell(pickup.transform.position) == cell)
+                return true;
+        }
+
+        return false;
+    }
+
     private void Start()
     {
         EnsureRefs();
@@ -39,6 +77,12 @@ public class Pickup : MonoBehaviour, IInteractable
             return true;
 
         return bag != null && bag.HasEmptySlot();
+    }
+
+    //现在能不能捡（手上有空位，或者背包有空位）
+    public bool CanPickUp
+    {
+        get { return itemData != null && HasRoom(); }
     }
 
     public string GetPrompt()

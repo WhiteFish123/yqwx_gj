@@ -36,7 +36,9 @@ public class UI_Inventory : MonoBehaviour
     private int selectedIndex = -1;//当前点中的格子（丢弃、收回时用；点过一次就一直记着�?
     private RectTransform dropButton;//运行时克隆出来的"丢弃"按钮
     private CanvasGroup dropButtonGroup;//它的显隐控制
-    private float timeScaleBeforeOpen = 1f;//打开前的时间缩放
+    private float timeScaleBeforeOpen = 1f;
+    private PlayerBrain playerBrain;
+    private bool playerBrainInputBeforeOpen = true;//打开前的时间缩放
 
     private void Awake()
     {
@@ -81,6 +83,12 @@ public class UI_Inventory : MonoBehaviour
         if (panel == null)
             return;
 
+        //ESC ?????(???????)
+        if (panel.activeSelf && Input.GetKeyDown(KeyCode.Escape))
+        {
+            SetPanelVisible(false);
+            return;
+        }
         if (Input.GetKeyDown(KeyCode.B))//B 键开关背�?
         {
             SetPanelVisible(!panel.activeSelf);
@@ -115,6 +123,30 @@ public class UI_Inventory : MonoBehaviour
             HideTooltip();
     }
 
+    //???????????:???????/?????A/D ??
+    private void SetInventoryInput(bool open)
+    {
+        if (playerBrain == null)
+            playerBrain = FindFirstObjectByType<PlayerBrain>();
+
+        if (playerBrain == null)
+            return;
+
+        if (open)
+        {
+            playerBrainInputBeforeOpen = playerBrain.inputEnabled;
+            playerBrain.inputEnabled = false;
+        }
+        else
+        {
+            playerBrain.inputEnabled = playerBrainInputBeforeOpen;
+        }
+    }
+    //????????????(???????? ESC ??)
+    public bool IsOpen
+    {
+        get { return panel != null && panel.activeSelf; }
+    }
     public void SetPanelVisible(bool visible)
     {
         if (panel == null)
@@ -125,14 +157,16 @@ public class UI_Inventory : MonoBehaviour
 
         if (visible && !wasVisible)//打开：暂停外�?
         {
-            timeScaleBeforeOpen = Time.timeScale > 0f ? Time.timeScale : 1f;//guard: never snapshot 0
+            timeScaleBeforeOpen = Time.timeScale > 0f ? Time.timeScale : 1f;
+            SetInventoryInput(true);//guard: never snapshot 0
             Time.timeScale = 0f;
 
             RefreshAll();
         }
         else if (!visible && wasVisible)//关闭：恢复时�?
         {
-            Time.timeScale = IsOtherPauseActive() ? 0f : timeScaleBeforeOpen;//keep frozen if pause menu is still open
+            Time.timeScale = IsOtherPauseActive() ? 0f : timeScaleBeforeOpen;
+            SetInventoryInput(false);//keep frozen if pause menu is still open
         }
 
         if (!visible)

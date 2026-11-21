@@ -137,9 +137,20 @@ public class PauseMenu : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(pauseKey))
-            Toggle();
+        if (!Input.GetKeyDown(pauseKey))
+            return;
+
+        //??????? ESC ????(???),???????
+        if (inventoryUi == null)
+            inventoryUi = FindFirstObjectByType<UI_Inventory>();
+
+        if (inventoryUi != null && inventoryUi.IsOpen)
+            return;
+
+        Toggle();
     }
+
+    private UI_Inventory inventoryUi;
 
     // ===== 开关 =====
 

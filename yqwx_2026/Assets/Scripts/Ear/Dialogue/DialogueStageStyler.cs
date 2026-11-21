@@ -211,6 +211,10 @@ public class DialogueStageStyler : DialoguePresenterBase
         if (resetOnDialogueEnd)
             ResetToOriginal();
 
+        // 立绘已经不在对话框的 CanvasGroup 里，不会跟着淡出，所以对话结束时自己收起来
+        if (portraitGo != null)
+            portraitGo.SetActive(false);
+
         return YarnTask.CompletedTask;
     }
 
