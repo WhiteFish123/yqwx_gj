@@ -1,0 +1,114 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2421ad80699b4f74cbbd65404c94a670, type: 3}
+  m_Name: DialogueSpeakerTable
+  m_EditorClassIdentifier: 
+  speakers:
+  - speakerName: "\u8587\u8587\u5B89"
+    portraitSide: 1
+    portrait: {fileID: -4617986931047059890, guid: ab6795f91a322dd40b9d38aba0afeadd, type: 3}
+    portraitOffset: {x: -50, y: 0}
+    portraitScale: 1
+    portraitFlipX: 0
+    nameAlignment: 257
+    box: {fileID: 3686962169364992275, guid: cad55e8ad1d8de349b78da2ac6d30cc5, type: 3}
+    overrideBoxOffset: 0
+    boxOffset: {x: 0, y: 0}
+    overrideTextPadding: 0
+    textPadding: {x: 500, y: 1.5, z: -70, w: 48.6}
+  - speakerName: "\u6D4B\u8BD5\u8005"
+    portraitSide: 0
+    portrait: {fileID: 0}
+    portraitOffset: {x: 0, y: 0}
+    portraitScale: 1
+    portraitFlipX: 0
+    nameAlignment: 257
+    box: {fileID: 3686962169364992275, guid: cad55e8ad1d8de349b78da2ac6d30cc5, type: 3}
+    overrideBoxOffset: 0
+    boxOffset: {x: 0, y: 0}
+    overrideTextPadding: 0
+    textPadding: {x: 120, y: 150, z: -72, w: 12}
+  - speakerName: "\u7231\u4E3D\u4E1D"
+    portraitSide: 3
+    portrait: {fileID: -999444717053575429, guid: 892375df38e37cb4bb23bf802f2db4e3, type: 3}
+    portraitOffset: {x: 60, y: 0}
+    portraitScale: 1.18
+    portraitFlipX: 0
+    nameAlignment: 260
+    box: {fileID: 1611970466183296693, guid: 475949d243dbbee4382fa6e05a1c48f2, type: 3}
+    overrideBoxOffset: 0
+    boxOffset: {x: 0, y: 0}
+    overrideTextPadding: 0
+    textPadding: {x: -2039, y: 2000, z: -2000, w: 2000}
+  fallback:
+    speakerName: "(\u65C1\u767D/\u9ED8\u8BA4)"
+    portraitSide: 0
+    portrait: {fileID: 0}
+    portraitOffset: {x: 0, y: 0}
+    portraitScale: 1
+    portraitFlipX: 0
+    nameAlignment: 257
+    box: {fileID: -8881488233920462768, guid: 89bfe3d0ea6eaab4295e45d5fecf899f, type: 3}
+    overrideBoxOffset: 0
+    boxOffset: {x: 0, y: 0}
+    overrideTextPadding: 0
+    textPadding: {x: 120, y: 150, z: -72, w: 12}
+  portraits:
+  - key: vivian
+    sprite: {fileID: -4617986931047059890, guid: ab6795f91a322dd40b9d38aba0afeadd, type: 3}
+    bandFraction: 1
+    overrideRect: 0
+    rectLeft: 0
+    rectTop: 0
+    rectRight: 0
+    rectBottom: 0
+  - key: alice
+    sprite: {fileID: -999444717053575429, guid: 892375df38e37cb4bb23bf802f2db4e3, type: 3}
+    bandFraction: 1
+    overrideRect: 0
+    rectLeft: 0
+    rectTop: 0
+    rectRight: 0
+    rectBottom: 0
+  - key: alice_blood
+    sprite: {fileID: -5028797208709259935, guid: 26603e3f5b61ded49a70c09685232631, type: 3}
+    bandFraction: 1
+    overrideRect: 0
+    rectLeft: 0
+    rectTop: 0
+    rectRight: 0
+    rectBottom: 0
+  boxes:
+  - key: default
+    sprite: {fileID: 3686962169364992275, guid: cad55e8ad1d8de349b78da2ac6d30cc5, type: 3}
+    bandFraction: 1
+    overrideRect: 0
+    rectLeft: 0
+    rectTop: 0
+    rectRight: 0
+    rectBottom: 0
+  - key: alice
+    sprite: {fileID: 1611970466183296693, guid: 475949d243dbbee4382fa6e05a1c48f2, type: 3}
+    bandFraction: 0.637
+    overrideRect: 0
+    rectLeft: 0
+    rectTop: 0
+    rectRight: 0
+    rectBottom: 0
+  - key: narration
+    sprite: {fileID: -8881488233920462768, guid: 89bfe3d0ea6eaab4295e45d5fecf899f, type: 3}
+    bandFraction: 1
+    overrideRect: 1
+    rectLeft: -60
+    rectTop: 155.7265
+    rectRight: 60
+    rectBottom: -0.000496

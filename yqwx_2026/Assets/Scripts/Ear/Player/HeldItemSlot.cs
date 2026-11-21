@@ -3,6 +3,7 @@
 //   因为使用次数存在物品身上；如果传 prefab，每次装备都会新建物品、次数被重置成满，
 //   就会变成"丢下再捡起来 = 无限子弹"。
 using UnityEngine;
+using Yarn.Unity;
 
 public class HeldItemSlot : MonoBehaviour
 {
@@ -17,6 +18,8 @@ public class HeldItemSlot : MonoBehaviour
     public ItemData startItem;   // 开局手上拿的测试物品
 
     private PlayerGridMove move;
+    private PlayerBrain brain;
+    private DialogueRunner dialogueRunner;
     private IUsable current;             // 手上物品的"用法"（武器有，血瓶之类没有）
     private GameObject holderInstance;   // 手上物品的实例（由 heldPrefab 例化出来）
     private InventoryItem heldItem;      // ★ 手上这件物品（剩余次数存在这里面）
@@ -35,6 +38,8 @@ public class HeldItemSlot : MonoBehaviour
     void Awake()
     {
         move = GetComponent<PlayerGridMove>();
+        brain = GetComponent<PlayerBrain>();
+        dialogueRunner = FindFirstObjectByType<DialogueRunner>();
     }
 
     void Start()
@@ -53,9 +58,18 @@ public class HeldItemSlot : MonoBehaviour
         }
 
         // 打火机：按空格点燃正前方的木箱（冷却由 WeaponBase 管）
-        if (current is Lighter && Input.GetKeyDown(igniteKey))
+        // ★ 空格在对话里是"推进下一句"，所以输入被锁（对话/传送/暂停）时不能点火，
+        //   否则玩家对着木箱说话，每按一次空格就把箱子点着了。
+        if (current is Lighter && !InputLocked && Input.GetKeyDown(igniteKey))
             UseEquipped();
     }
+
+    //对话、传送渐黑、死亡等都会把 PlayerBrain.inputEnabled 关掉
+    //另外直接查 DialogueRunner：即使对话不是走 DialogueHotkey 开起来的（触发器/命令），
+    //空格也不会顺带把木箱点着
+    bool InputLocked =>
+        (brain != null && !brain.inputEnabled)
+        || (dialogueRunner != null && dialogueRunner.IsDialogueRunning);
 
     // ===== 由状态机（Player_AttackState）调用 =====
 
