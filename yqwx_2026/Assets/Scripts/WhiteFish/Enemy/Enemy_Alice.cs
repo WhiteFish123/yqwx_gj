@@ -9,6 +9,13 @@ public class Enemy_Alice : Enemy
     private const string ChargeName = "Alice_Charge";
     private const string CrashName = "Alice_Crash";
 
+    [Header("Boss")]
+    [Tooltip("没开战前站着的朝向（默认朝下）")]
+    public Vector2Int initialFacing = Vector2Int.down;
+    [Tooltip("勾上＝一开始就能打；关掉＝等剧情播完调用 StartFight() 才参战（BOSS 用）")]
+    public bool combatEnabled;
+
+
     protected override void Awake()//创建状态实例
     {
         base.Awake();
@@ -27,8 +34,57 @@ public class Enemy_Alice : Enemy
     {
         base.Start();
 
-        BuildPatrolPath();
+        SetFacing(initialFacing);//先按设定朝站好（BOSS 默认朝下）
+
+        if (combatEnabled)
+            BuildPatrolPath();//没开战就不建路线，站着不动等剧情
+
         stateMachine.Initialize(idleState);
+    }
+
+    //转向玩家：优先横向（左右比上下明显时朝左右），并立刻换成对应朝向的待机图
+    public void FacePlayer()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+
+        if (player == null)
+            return;
+
+        Vector2 delta = (Vector2)(player.transform.position - transform.position);
+
+        if (delta.sqrMagnitude < 0.0001f)
+            return;
+
+        Vector2Int direction;
+
+        if (Mathf.Abs(delta.x) >= Mathf.Abs(delta.y))
+            direction = delta.x >= 0f ? Vector2Int.right : Vector2Int.left;
+        else
+            direction = delta.y >= 0f ? Vector2Int.up : Vector2Int.down;
+
+        SetFacing(direction);
+        RefreshFacingClip();
+    }
+
+    //剧情播完调用：开始参战
+    public void StartFight()
+    {
+        if (combatEnabled)
+            return;
+
+        combatEnabled = true;
+
+        BuildPatrolPath();
+        FacePlayer();
+    }
+
+    //没开战前对玩家完全没反应
+    public override bool CanDetectPlayer()
+    {
+        if (!combatEnabled)
+            return false;
+
+        return base.CanDetectPlayer();
     }
 
     protected override void Update()

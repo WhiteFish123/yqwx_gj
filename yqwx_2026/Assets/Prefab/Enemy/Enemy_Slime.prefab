@@ -248,7 +248,7 @@ Transform:
   m_GameObject: {fileID: 6592837906367104151}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.6, y: 0.6187501, z: 0}
+  m_LocalPosition: {x: 0.6, y: 0.7750001, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -388,14 +388,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 1
-  moveDuration: 0.7
+  moveDuration: 0.56
   idleTime: 2
   patrolRoute: {fileID: 0}
   grid: {fileID: 0}
   obstacleMask:
     serializedVersion: 2
     m_Bits: 256
-  chaseDuration: 0.5
+  chaseDuration: 0.4
   investigateDuration: 0.3
   attackTriggerDistance: 2
   attackDashCells: 3

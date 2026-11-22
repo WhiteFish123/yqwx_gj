@@ -57,9 +57,14 @@ public class PlayerInteractor : MonoBehaviour
     private IInteractable nearest;// 记录最近的可交互对象
     private PlayerGridMove motor;
 
+    //场景里现在有没有"按 E 能交互的东西"。
+    //DialogueHotkey 用它判断 E 是不是已经被交互吃掉了，避免同一帧又开一段默认对话。
+    public static bool HasInteractableInRange { get; private set; }
+
     private SpriteRenderer keyHint;// 物品旁边的闪烁 F
     private float blinkTimer;
     private bool blinkLight = true;
+    private Yarn.Unity.DialogueRunner dialogueRunner;
 
     private void Awake()
     {
@@ -83,16 +88,22 @@ public class PlayerInteractor : MonoBehaviour
     {
         nearest = FindNearest();
 
+        // 给 DialogueHotkey 用：附近有能按 E 交互的东西时，E 归交互
+        HasInteractableInRange = nearest != null;
+
         // 地上物品：用物品旁边的 F 图标；其他：底部文字
         Pickup pickup = nearest as Pickup;
         bool showKeyHint = pickup != null && pickup.CanPickUp;
 
         UpdateKeyHint(showKeyHint, pickup);
 
+        // 对话进行的时候，底部提示（[E] 查看）要收起来，别压在对话框上
+        bool dialogueActive = IsDialogueRunning();
+
         if (promptText != null)
         {
             // 能被 F 捡的时候，底部文字让位给 F 图标
-            if (nearest != null && !showKeyHint)
+            if (nearest != null && !showKeyHint && !dialogueActive)
             {
                 bool isPickup = nearest is Pickup;
                 promptText.text = "[" + (isPickup ? "F" : "E") + "] " + nearest.GetPrompt();
@@ -155,6 +166,15 @@ public class PlayerInteractor : MonoBehaviour
         Sprite wanted = blinkLight ? keyHintLight : keyHintDark;
         if (wanted != null && keyHint.sprite != wanted)
             keyHint.sprite = wanted;
+    }
+
+    // 对话在播的时候不显示底部文字提示
+    private bool IsDialogueRunning()
+    {
+        if (dialogueRunner == null)
+            dialogueRunner = FindFirstObjectByType<Yarn.Unity.DialogueRunner>();
+
+        return dialogueRunner != null && dialogueRunner.IsDialogueRunning;
     }
 
     // 查找最近的可交互对象（地上物品必须站在它前面才算）

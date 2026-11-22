@@ -393,7 +393,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   runner: {fileID: 248955605}
   brain: {fileID: 0}
-  startKey: 101
+  startKey: 0
   advanceKey: 32
   startNode: Vivian_Opening
   fastForwardKey: 306
@@ -689,8 +689,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8899695f5e5623d49a86f3e4625d1d1a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startNode: Vivian_Opening
-  continueNode: Vivian_Crash
+  startNode: L1_Drive
+  continueNode: 
   runner: {fileID: 248955605}
   hotkey: {fileID: 248955604}
   nextScene: Level_03

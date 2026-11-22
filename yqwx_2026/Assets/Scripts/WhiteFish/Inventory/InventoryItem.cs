@@ -17,6 +17,7 @@ public class InventoryItem
     }
 
     //写回剩余使用次数（超出范围会被夹紧；无限次物品永远是 -1）
+    //★ 弹药无上限的武器（ItemData.ammoNoLimit，例如手枪）只夹住下限，上限随便涨
     public void SetRemainingUses(int value)
     {
         if (data == null || data.maxUses < 0)
@@ -25,7 +26,20 @@ public class InventoryItem
             return;
         }
 
-        remainingUses = Mathf.Clamp(value, 0, data.maxUses);
+        if (data.ammoNoLimit)
+            remainingUses = Mathf.Max(0, value);
+        else
+            remainingUses = Mathf.Clamp(value, 0, data.maxUses);
+    }
+
+    //加弹药（捡到子弹时用）；返回实际加了几发
+    public int AddUses(int amount)
+    {
+        if (data == null || data.maxUses < 0 || amount <= 0)
+            return 0;
+
+        SetRemainingUses(Mathf.Max(0, remainingUses) + amount);
+        return amount;
     }
 
     public bool CanAddStack()//是否还能堆叠（非消耗品永不堆叠）

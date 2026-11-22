@@ -185,10 +185,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   interactKey: 101
+  pickupKey: 102
   interactRange: 1.5
+  requireFacingForPickup: 1
+  facingDot: 0.7
   interactableLayers:
     serializedVersion: 2
     m_Bits: 4294967295
+  keyHintLight: {fileID: 0}
+  keyHintDark: {fileID: 0}
+  keyHintScale: 5
+  keyHintOffset: 0.55
+  keyHintBlinkInterval: 0.18
+  keyHintSortingOrder: 20000
   promptText: {fileID: 0}
 --- !u!114 &-3473615025252362922
 MonoBehaviour:
@@ -218,7 +227,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   grid: {fileID: 0}
-  moveDuration: 0.15
+  moveDuration: 0.17
   pushPullDuration: 0.3
   blockingMask:
     serializedVersion: 2

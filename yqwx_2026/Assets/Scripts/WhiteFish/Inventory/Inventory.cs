@@ -28,6 +28,12 @@ public class Inventory : MonoBehaviour
         GiveStartingItems();
     }
 
+    //外部直接改了某件物品的数据（例如给背包里的枪补子弹）之后，通知一次让 UI 刷新
+    public void NotifyChanged()
+    {
+        OnChanged?.Invoke();
+    }
+
     public bool AddItem(ItemData data, int count = 1)//加入道具，自动堆叠；放不下返回 false
     {
         if (data == null || count <= 0)

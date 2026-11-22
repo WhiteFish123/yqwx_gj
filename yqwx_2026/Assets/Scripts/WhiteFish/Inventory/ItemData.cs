@@ -28,6 +28,9 @@ public class ItemData : ScriptableObject
     [Tooltip("可使用次数；-1 表示无限次（例如刀）。武器装备时读这个值，用完自毁")]
     public int maxUses = -1;//使用次数，-1 = 无限
 
+    [Tooltip("勾上＝这件武器的弹药没有上限：捡到的子弹可以一直往上加，打空了也不会自毁（枪用它）")]
+    public bool ammoNoLimit;
+
     [Header("使用效果（在背包里点\"使用\"时生效）")]
     [Tooltip("拿在手上按 J 用的效果由 heldPrefab 上的脚本决定，不走这里")]
     public ItemEffect useEffect = ItemEffect.None;

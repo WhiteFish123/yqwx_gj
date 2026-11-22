@@ -260,6 +260,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemData: {fileID: 11400000, guid: f0112c3d4e5f60718293a4b5c6d7e8f9, type: 2}
   remainingUses: -1
+  dialogueOnPickup: L2_Lighter
 --- !u!114 &1187111858280209599
 MonoBehaviour:
   m_ObjectHideFlags: 0

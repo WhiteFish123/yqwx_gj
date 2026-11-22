@@ -89,8 +89,8 @@ public class HeldItemSlot : MonoBehaviour
     //朝向：格子移动的 Facing 是 Vector2Int，这里转成 Vector2 给武器用
     Vector2 Facing => move != null ? new Vector2(move.Facing.x, move.Facing.y) : Vector2.down;
 
-    // 次数以"物品"为准，武器只是临时镜像：每次用完把它读回来写进物品
-    void SyncUsesToItem()
+        // 次数以"物品"为准，武器只是临时镜像：每次用完把它读回来写进物品
+    public void SyncUsesToItem()
     {
         WeaponBase weapon = current as WeaponBase;
         if (weapon != null && heldItem != null)
@@ -126,7 +126,7 @@ public class HeldItemSlot : MonoBehaviour
 
         // ★ 把物品身上的次数灌给武器；之后武器每用一次就少一次
         WeaponBase weapon = holderInstance.GetComponent<WeaponBase>();
-        if (weapon != null) weapon.ApplyItemUses(item.data.maxUses, item.remainingUses);
+        if (weapon != null) weapon.ApplyItemUses(item.data.maxUses, item.remainingUses, item.data.ammoNoLimit);
 
         if (current == null)
             Debug.Log("手上物品没有 IUsable（血瓶、钥匙这类属正常）：" + item.data.itemName);

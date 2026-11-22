@@ -261,6 +261,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemData: {fileID: 11400000, guid: 0718293a4b5c6d7e8f90a1b2c3d4e5f6, type: 2}
   remainingUses: -1
+  dialogueOnPickup: L1_Knife_Pickup
 --- !u!114 &2477387437956398150
 MonoBehaviour:
   m_ObjectHideFlags: 0

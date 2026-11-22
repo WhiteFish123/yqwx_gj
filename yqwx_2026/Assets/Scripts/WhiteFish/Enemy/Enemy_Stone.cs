@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 //石像鬼：不追逐玩家，正前方直线发现玩家后先原地激活（Alarm），
@@ -30,6 +31,7 @@ public class Enemy_Stone : Enemy
     public float chargeTime = 1f;//蓄力抖动时长
     public float settleTime = 0.15f;//抖动结束归位后，停顿多久再冲撞
     public float dashDuration = 0.12f;//冲撞时每格用时
+    public float retreatDuration = 0.07f;//撞墙后按原路退回时每格用时（比冲撞更快）
     public float stunTime = 2.5f;//撞墙后的眩晕时长
     public float detectCooldownAfterBump = 2.5f;//撞到玩家后多久不再察觉
 
@@ -49,6 +51,10 @@ public class Enemy_Stone : Enemy
     public Enemy_StoneChargeState chargeState;//蓄力 + 冲撞
     public Enemy_StoneStunnedState stunnedState;//撞墙眩晕
     public Enemy_StoneReturnState stoneReturnState;//走回原位
+    public Enemy_StoneRetreatState retreatState;//回不去时沿冲撞轨迹退回
+
+    //本次冲撞走过的格子（起点在前），回家走不通时按它原路退回
+    public readonly List<Vector3Int> dashTrail = new List<Vector3Int>();
 
     public Vector3Int homeCell { get; private set; }//出生格子，冲撞后回到这里
 
@@ -118,6 +124,7 @@ public class Enemy_Stone : Enemy
         chargeState = new Enemy_StoneChargeState(this, stateMachine);
         stunnedState = new Enemy_StoneStunnedState(this, stateMachine, "Stone_Stunned");
         stoneReturnState = new Enemy_StoneReturnState(this, stateMachine, null, "Stone_Move");
+        retreatState = new Enemy_StoneRetreatState(this, stateMachine, "Stone_Move");
         deadState = new Enemy_DeadState(this, stateMachine, "Stone_Dead");
 
         chaseState = null;//石像鬼不追逐
@@ -169,7 +176,23 @@ public class Enemy_Stone : Enemy
     //冲撞或眩晕结束后调用：已在原位就待机，否则走回去
     public void GoHome()
     {
-        if (WorldToCell(transform.position) == homeCell)
+        Vector3Int current = WorldToCell(transform.position);
+
+        //冲撞可能把它推进「回不去的区域」（区域表没覆盖的走廊、单向下楼梯之类），
+        //这时顺着本次冲撞的轨迹原路退回；轨迹也用完了就直接归位，绝不留它卡在半路
+        if (current != homeCell && !CanPathHome(current))
+        {
+            if (dashTrail.Count > 0 && retreatState != null)
+            {
+                stateMachine.TryChangeState(retreatState, "Enemy_Stone.GoHome(retreat)");
+                return;
+            }
+
+            transform.position = CellToCenter(homeCell);
+            current = homeCell;
+        }
+
+        if (current == homeCell)
         {
             SetFacing(initialFacing);//已在原位，朝向直接恢复成出生朝向
             stateMachine.TryChangeState(idleState, "Enemy_Stone.GoHome(idle)");
@@ -178,6 +201,16 @@ public class Enemy_Stone : Enemy
         {
             stateMachine.TryChangeState(stoneReturnState, "Enemy_Stone.GoHome(return)");
         }
+    }
+
+    //从 from 能不能寻路回 homeCell（区域表没覆盖时会是 false）
+    private bool CanPathHome(Vector3Int from)
+    {
+        if (pathfinder == null || grid == null)
+            return true;//没有寻路器就当作能走，交给返回状态处理
+
+        List<Vector3Int> path = pathfinder.FindPath(from, homeCell);
+        return path != null && path.Count > 0;
     }
 
     public override bool CanDetectPlayer()//正前方 1 格宽 × detectRange 格

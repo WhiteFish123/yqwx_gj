@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 // 传送门：房间之间的"门口"。
 //
@@ -59,6 +60,11 @@ public class Portal : MonoBehaviour
         if (grid == null)
             return false;
 
+        // 播放模式里重新编译会让静态列表被清空（对象不会重新 OnEnable），
+        // 这时按场景里的实际对象重建一次，免得门全部失灵。
+        if (all.Count == 0)
+            RebuildRegistry();
+
         for (int i = 0; i < all.Count; i++)
         {
             Portal candidate = all[i];
@@ -73,6 +79,18 @@ public class Portal : MonoBehaviour
         }
 
         return false;
+    }
+
+    private static void RebuildRegistry()
+    {
+        all.Clear();
+
+        Portal[] found = FindObjectsByType<Portal>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < found.Length; i++)
+        {
+            if (found[i] != null && found[i].isActiveAndEnabled)
+                all.Add(found[i]);
+        }
     }
 
     private void Awake()
@@ -131,6 +149,9 @@ public class Portal : MonoBehaviour
                 if (center.y < bounds.min.y - 0.001f || center.y > bounds.max.y + 0.001f)
                     continue;
 
+                if (IsCellBlocked(new Vector3Int(x, y, 0)))
+                    continue;
+
                 cells.Add(new Vector2Int(x, y));
             }
         }
@@ -139,6 +160,27 @@ public class Portal : MonoBehaviour
     }
 
     // 按 x 再按 y 排：横着的门从左到右，竖着的门从下到上，两边顺序一致才能按序号对上
+    private static int obstacleLayerIndex = -2;
+
+    // A cell that has a wall tile does not count as a doorway: the wall next to the door must not teleport.
+    private bool IsCellBlocked(Vector3Int cell)
+    {
+        if (grid == null)
+            return false;
+
+        foreach (Tilemap map in grid.GetComponentsInChildren<Tilemap>(true))
+        {
+            if (map == null || !map.HasTile(cell))
+                continue;
+
+            if (map.name.StartsWith("Walls"))
+                return true;
+        }
+
+        return false;
+    }
+
+
     private void SortCells()
     {
         cells.Sort((a, b) =>

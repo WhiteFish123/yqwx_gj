@@ -12,9 +12,9 @@ public class IntroSequence : MonoBehaviour
 {
     [Header("对话")]
     [Tooltip("Intro 场景里开始播放的节点")]
-    public string startNode = "Vivian_Opening";
-    [Tooltip("切场景后在目标场景里接着播放的节点")]
-    public string continueNode = "Vivian_Crash";
+    public string startNode = "L1_Drive";
+    [Tooltip("切场景后在目标场景里接着播放的节点；留空 = 到新场景直接显现、不再播对话")]
+    public string continueNode = "";
     public DialogueRunner runner;
     public DialogueHotkey hotkey;
 
@@ -50,6 +50,7 @@ public class IntroSequence : MonoBehaviour
     private SpriteRenderer[] playerRenderers;
     private string pendingMusicId;
     private bool musicRestarted;
+    private bool noDialogueContinuation;
 
     private void Awake()
     {
@@ -172,9 +173,6 @@ public class IntroSequence : MonoBehaviour
         runner = FindFirstObjectByType<DialogueRunner>();
         hotkey = FindFirstObjectByType<DialogueHotkey>();
 
-        //开场对话期间先藏起玩家
-        HidePlayer();
-
         string node = DialogueContinuation.TakePending();
         if (string.IsNullOrEmpty(node))
             node = continueNode;
@@ -184,21 +182,21 @@ public class IntroSequence : MonoBehaviour
 
         if (runner != null && !string.IsNullOrEmpty(node))
         {
+            //开场对话期间先藏起玩家，等这段播完再让他出现
+            HidePlayer();
+
             if (hotkey != null)
                 hotkey.BeginDialogue(node);
             else
                 runner.StartDialogue(node);
 
             phase = Phase.LevelDialogue;
+            return;
         }
-        else
-        {
-            Debug.LogWarning("[开场] 新场景里没有 DialogueRunner，直接显现画面。", this);
-            RestartMusicIfNeeded();
-            ShowPlayer();
-            phase = Phase.Done;
-            Destroy(gameObject, 0.2f);
-        }
+
+        //没有后续对话：不藏玩家，直接从黑场显现，显现完放音乐收工
+        noDialogueContinuation = true;
+        phase = Phase.LevelDialogue;
     }
 
     private void TickLevelDialogue()
@@ -210,6 +208,18 @@ public class IntroSequence : MonoBehaviour
         //画面完全显现之后再重新放音乐
         if (timer >= fadeInDuration)
             RestartMusicIfNeeded();
+
+        if (noDialogueContinuation)
+        {
+            if (timer < fadeInDuration)
+                return;
+
+            //显现完了：玩家本来就是可见的，控制器退场
+            SetOverlayAlpha(0f);
+            phase = Phase.Done;
+            Destroy(gameObject, 0.2f);
+            return;
+        }
 
         if (runner != null && runner.IsDialogueRunning)
         {

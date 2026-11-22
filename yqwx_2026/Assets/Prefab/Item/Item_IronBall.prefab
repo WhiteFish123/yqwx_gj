@@ -261,6 +261,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemData: {fileID: 11400000, guid: 18293a4b5c6d7e8f90a1b2c3d4e5f607, type: 2}
   remainingUses: -1
+  dialogueOnPickup: L2_IronBall
+  isAmmo: 0
+  ammoFor: {fileID: 0}
+  ammoAmount: 8
 --- !u!114 &3776243575748248031
 MonoBehaviour:
   m_ObjectHideFlags: 0

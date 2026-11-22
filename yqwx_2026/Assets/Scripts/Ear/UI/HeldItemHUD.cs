@@ -235,10 +235,13 @@ public class HeldItemHUD : MonoBehaviour
             boxRoot.SetActive(visible);
     }
 
-    //有使用次数的显示"名字（剩/总）"，无限的只显示名字
+    //有使用次数的显示"名字（剩/总）"，无限的只显示名字；弹药无上限的枪只显示剩余发数
     private static string Format(InventoryItem item)
     {
         ItemData data = item.data;
+
+        if (data.ammoNoLimit)
+            return data.itemName + "（" + Mathf.Max(0, item.remainingUses) + "）";
 
         if (data.maxUses >= 0)
             return data.itemName + "（" + item.remainingUses + "/" + data.maxUses + "）";

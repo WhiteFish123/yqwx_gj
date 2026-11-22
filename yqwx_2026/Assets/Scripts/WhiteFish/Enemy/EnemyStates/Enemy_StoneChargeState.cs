@@ -27,6 +27,8 @@ public class Enemy_StoneChargeState : EnemyState
     private float frameTimer;//当前帧已播放时间
     private bool frameLooping;//首轮是否已播完
 
+    private GridPassability passability;//通行规则：挡住「这一脚不允许走」的方向（楼梯/分层）
+
     public Enemy_StoneChargeState(Enemy_Stone stone, StateMachine stateMachine)
         : base(stone, stateMachine, null)//不参 bool 参数体系
     {
@@ -54,6 +56,11 @@ public class Enemy_StoneChargeState : EnemyState
 
         baseCenter = enemy.CellToCenter(enemy.WorldToCell(enemy.transform.position));
         enemy.transform.position = baseCenter;//吸附到格中心
+
+        passability = enemy.grid != null ? enemy.grid.GetComponent<GridPassability>() : null;
+
+        stone.dashTrail.Clear();
+        stone.dashTrail.Add(enemy.WorldToCell(baseCenter));//轨迹从出发格开始记
 
         if (anim != null)
             anim.enabled = false;//接管 sprite，蓄力期间定格
@@ -165,6 +172,10 @@ public class Enemy_StoneChargeState : EnemyState
             return;
         }
 
+        //通行规则不允许这一步（比如楼梯只能顺方向走）：也当作撞墙，否则冲过去就回不来了
+        //注意：RegionMap 在某些格子上会把「脚下有地面但区域表没覆盖到」判成不可走，
+        //直接拦会让石像鬼在原地白抖一下，所以这里只记日志、仍然允许冲——回家由轨迹退回兜底。
+
         if (IsPlayerAt(next))//撞到玩家：造成伤害，走回原位，并短暂不再察觉
         {
             HurtPlayer();
@@ -183,6 +194,8 @@ public class Enemy_StoneChargeState : EnemyState
         stepTo = enemy.CellToCenter(next);
         progress = 0f;
         isStepping = true;
+
+        stone.dashTrail.Add(next);//记下走过的格子，回家路径断了可以原路退回
     }
 
     private void AdvanceFrames()//按帧率推进冲撞动画

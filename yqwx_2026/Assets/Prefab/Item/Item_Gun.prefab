@@ -50,6 +50,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemData: {fileID: 11400000, guid: f60718293a4b5c6d7e8f90a1b2c3d4e5, type: 2}
   remainingUses: -1
+  dialogueOnPickup: L2_Gun
+  isAmmo: 0
+  ammoFor: {fileID: 0}
+  ammoAmount: 8
 --- !u!212 &8621660696251143318
 SpriteRenderer:
   m_ObjectHideFlags: 0

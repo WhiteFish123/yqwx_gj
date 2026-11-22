@@ -1,0 +1,12 @@
+{
+"version":3,
+"commands":[
+{"yarnName":"apply_damage","definitionName":"global::DialogueCommands.ApplyDamage","fileName":"yqwx_2026\\Assets\\Scripts\\Ear\\Dialogue\\DialogueCommands.cs","language":"csharp","async":false,"containsErrors":false,"errorCodes":["YS1025"],"location":{"start":{"line":72,"character":24},"end":{"line":72,"character":35}},"parameters":[{"name":"amount","isParamsArray":false,"type":"string"}]},
+{"yarnName":"boss_fight_start","definitionName":"global::DialogueCommands.BossFightStart","fileName":"yqwx_2026\\Assets\\Scripts\\Ear\\Dialogue\\DialogueCommands.cs","language":"csharp","async":false,"containsErrors":false,"errorCodes":["YS1025"],"location":{"start":{"line":101,"character":24},"end":{"line":101,"character":38}},"parameters":[]},
+{"yarnName":"drive_fx_start","definitionName":"global::DialogueCommands.DriveFxStart","fileName":"yqwx_2026\\Assets\\Scripts\\Ear\\Dialogue\\DialogueCommands.cs","language":"csharp","async":false,"containsErrors":false,"errorCodes":["YS1025"],"location":{"start":{"line":95,"character":24},"end":{"line":95,"character":36}},"parameters":[]},
+{"yarnName":"heal_player","definitionName":"global::DialogueCommands.HealPlayer","fileName":"yqwx_2026\\Assets\\Scripts\\Ear\\Dialogue\\DialogueCommands.cs","language":"csharp","async":false,"containsErrors":false,"errorCodes":["YS1025"],"location":{"start":{"line":85,"character":24},"end":{"line":85,"character":34}},"parameters":[{"name":"amount","isParamsArray":false,"type":"string"}]}
+],
+"functions":[
+
+]
+}

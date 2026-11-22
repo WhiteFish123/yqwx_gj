@@ -13,10 +13,13 @@ MonoBehaviour:
   m_Name: Item - Gun
   m_EditorClassIdentifier: 
   itemName: "\u67AA"
-  description: "\u8FDC\u7A0B\u6B66\u5668\uFF0C\u5171 6 \u53D1"
+  description: "\u8FDC\u7A0B\u6B66\u5668\uFF0C\u521D\u59CB\u6CA1\u6709\u5B50\u5F39\uFF0C\u6361\u5230\u5B50\u5F39\u53EF\u4EE5\u4E00\u76F4\u5F80\u4E0A\u52A0\u3002"
   icon: {fileID: 2946347121614945749, guid: e824dae39d453d84c872f83811509a56, type: 3}
   maxStack: 1
   isConsumable: 0
   worldPrefab: {fileID: 5155587711817214362, guid: 57755bde910c62a41ab1d156b7ac4385, type: 3}
   heldPrefab: {fileID: 3554912391962700999, guid: b7489e9c02db595439b79bbd8f9ab6ee, type: 3}
-  maxUses: 6
+  maxUses: 0
+  ammoNoLimit: 1
+  useEffect: 0
+  effectAmount: 1

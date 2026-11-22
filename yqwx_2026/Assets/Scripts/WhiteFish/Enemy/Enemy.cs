@@ -75,6 +75,57 @@ public class Enemy : MonoBehaviour, IDamageable, INoiseListener
         NoiseSystem.Unregister(this);
     }
 
+    // Find the Grid this enemy actually stands on (tile under its feet); FindFirstObjectByType alone picks another room's grid.
+    private Grid ResolveGrid()
+    {
+        Vector3 p = transform.position;
+        Grid nearest = null;
+        float nearestDist = float.MaxValue;
+
+        foreach (Grid candidate in FindObjectsByType<Grid>(FindObjectsSortMode.None))
+        {
+            if (candidate == null)
+                continue;
+
+            Vector3Int cell = candidate.WorldToCell(p);
+
+            foreach (Tilemap map in candidate.GetComponentsInChildren<Tilemap>(true))
+            {
+                if (map == null || !map.HasTile(cell))
+                    continue;
+
+                string mapName = map.name;
+
+                // PatrolPath / CoverFloor ???????????,???????????
+                if (mapName.StartsWith("Floor") || mapName.StartsWith("SecondFloor") || mapName.StartsWith("Stairs"))
+                    return candidate;
+            }
+
+            Vector3 center = candidate.GetCellCenterWorld(cell);
+            float dist = (center - p).sqrMagnitude;
+            if (dist < nearestDist)
+            {
+                nearestDist = dist;
+                nearest = candidate;
+            }
+        }
+
+        return nearest;
+    }
+
+    // Second floor tilemaps are named SecondFloor / SecondFloor_L4 / ... so match by prefix instead of exact name.
+    private static Tilemap FindSecondFloor(Grid owner)
+    {
+        foreach (Tilemap map in owner.GetComponentsInChildren<Tilemap>(true))
+        {
+            if (map != null && map.name.StartsWith("SecondFloor", System.StringComparison.OrdinalIgnoreCase))
+                return map;
+        }
+
+        return null;
+    }
+
+
     protected virtual void Awake()//获取组件
     {
         anim = GetComponentInChildren<Animator>();
@@ -92,14 +143,10 @@ public class Enemy : MonoBehaviour, IDamageable, INoiseListener
         currentHealth = maxHealth;
 
         if (grid == null)
-            grid = FindFirstObjectByType<Grid>();
+            grid = ResolveGrid();
 
         if (secondFloorTilemap == null && grid != null)
-        {
-            Transform floor = grid.transform.Find("SecondFloor");
-            if (floor != null)
-                secondFloorTilemap = floor.GetComponent<Tilemap>();
-        }
+            secondFloorTilemap = FindSecondFloor(grid);
     }
 
     protected virtual void Start()//构建视野与寻路（需在网格解析之后）

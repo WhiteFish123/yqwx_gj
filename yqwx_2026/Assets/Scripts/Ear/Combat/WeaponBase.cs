@@ -19,6 +19,9 @@ public abstract class WeaponBase : MonoBehaviour, IUsable
     // 兜底值：正常流程下会被物品数据覆盖（见 ApplyItemUses）。-1 = 无限次
     public int maxUses = -1;
 
+    [Tooltip("弹药没有上限：捡到的子弹可以一直累加，打空了也不自毁（手枪）")]
+    public bool ammoNoLimit;
+
     [Header("噪音")]
     // 使用这件武器时，向周围广播噪音的半径；0 = 完全无声。
     // 半径内的敌人会走过来查看（Enemy.BroadcastNoise）。枪声设大一点，刀保持 0。
@@ -42,9 +45,10 @@ public abstract class WeaponBase : MonoBehaviour, IUsable
     /// 装备时由 HeldItemSlot 调用：以"物品数据"为准灌入次数。
     /// itemMaxUses 传 -1 表示无限；itemRemainingUses 传 -1 表示按满次数算。
     /// </summary>
-    public void ApplyItemUses(int itemMaxUses, int itemRemainingUses)
+    public void ApplyItemUses(int itemMaxUses, int itemRemainingUses, bool itemAmmoNoLimit = false)
     {
         maxUses = itemMaxUses;
+        ammoNoLimit = itemAmmoNoLimit;
 
         if (maxUses < 0)
         {
@@ -53,7 +57,18 @@ public abstract class WeaponBase : MonoBehaviour, IUsable
         }
 
         int start = itemRemainingUses < 0 ? maxUses : itemRemainingUses;
-        remainingUses = Mathf.Clamp(start, 0, maxUses);
+
+        //★ 弹药无上限的枪：只夹下限，捡到的子弹可以超过 maxUses
+        remainingUses = ammoNoLimit ? Mathf.Max(0, start) : Mathf.Clamp(start, 0, maxUses);
+    }
+
+    //捡到子弹时调用：把弹药加上去（无上限的枪才会生效）
+    public void AddAmmo(int amount)
+    {
+        if (amount <= 0 || IsInfinite)
+            return;
+
+        remainingUses = Mathf.Max(0, remainingUses) + amount;
     }
 
     // IUsable 的实现：返回本次的后摇时长（0 = 这次没打出去，不用后摇）
@@ -74,7 +89,7 @@ public abstract class WeaponBase : MonoBehaviour, IUsable
         if (noiseRadius > 0f)
             Enemy.BroadcastNoise(origin, noiseRadius);
 
-        if (!IsInfinite && remainingUses <= 0)
+        if (!IsInfinite && !ammoNoLimit && remainingUses <= 0)
         {
             Debug.Log(name + " 次数耗尽，自我销毁");
             // 销毁后 HeldItemSlot 会在下一帧发现实例没了，把这件物品消耗掉（不回背包）

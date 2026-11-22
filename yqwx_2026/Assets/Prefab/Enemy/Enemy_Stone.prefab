@@ -247,14 +247,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 1
-  moveDuration: 0.5
+  moveDuration: 0.4
   idleTime: 2
   patrolRoute: {fileID: 7447199164747573794}
   grid: {fileID: 0}
   obstacleMask:
     serializedVersion: 2
     m_Bits: 256
-  chaseDuration: 0.22
+  chaseDuration: 0.18
   investigateDuration: 0.3
   attackTriggerDistance: 2
   attackDashCells: 3
@@ -268,9 +268,10 @@ MonoBehaviour:
   facingOption: 3
   initialFacing: {x: 1, y: 0}
   detectRange: 7
-  chargeTime: 1
-  settleTime: 0.15
+  chargeTime: 0.7
+  settleTime: 0.1
   dashDuration: 0.12
+  retreatDuration: 0.07
   stunTime: 2.5
   detectCooldownAfterBump: 2.5
   alarmFrameRate: 12
